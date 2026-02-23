@@ -137,7 +137,7 @@ export function LandingPage({ onNavigate, onLogin, isLoggedIn, isDarkMode }: Lan
             <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
               <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-sm font-medium text-foreground shadow-lg">
                 <Sparkles className="size-4 text-blue-500" />
-                <span className={isDarkMode ? "text-blue-200" : "text-blue-700"}>Findr v2.0 is now live</span>
+                <span className={isDarkMode ? "text-blue-200" : "text-blue-700"}>Findr is live</span>
               </span>
             </div>
 
@@ -153,8 +153,8 @@ export function LandingPage({ onNavigate, onLogin, isLoggedIn, isDarkMode }: Lan
                   textShadow: isDarkMode ? '0 0 40px rgba(59, 130, 246, 0.3)' : 'none'
                 }}
               >
-                The new standard for <br />
-                <span className="italic text-blue-500">lost & found</span> on campus.
+                See it. Claim it.
+                <span className="italic text-blue-500">Get it.</span>
               </h1>
               
               <p 
@@ -164,8 +164,7 @@ export function LandingPage({ onNavigate, onLogin, isLoggedIn, isDarkMode }: Lan
                   lineHeight: '1.6'
                 }}
               >
-                Findr uses AI to <b>detect</b>, <b>log</b>, and <b>match</b> lost items in <b>real-time</b>. 
-                Seamlessly integrated with campus security for a safer, smarter community.
+                Findr transforms lost & found management with camera-assisted detection and individualized, account-based item listings for faster returns.
               </p>
             </div>
 
