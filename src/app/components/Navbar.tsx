@@ -17,6 +17,7 @@ export function Navbar({ currentPage, onNavigate, isLoggedIn, onLogin, onLogout,
     { name: 'Listings', path: 'listings', requiresAuth: true },
     { name: 'Query', path: 'query', requiresAuth: true },
     { name: 'Stats', path: 'stats', requiresAuth: false },
+    { name: 'Staff', path: 'staff', requiresAuth: true },
   ];
 
   return (

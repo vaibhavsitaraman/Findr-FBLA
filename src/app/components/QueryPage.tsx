@@ -7,6 +7,7 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Plus, MapPin, Clock, Package, AlertTriangle, Lightbulb } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '../../lib/supabaseClient';
 
 export function QueryPage() {
   const [formData, setFormData] = useState({
@@ -18,7 +19,7 @@ export function QueryPage() {
     contactEmail: '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate form
@@ -27,7 +28,35 @@ export function QueryPage() {
       return;
     }
 
-    // Mock submission
+    const { data: sessionRes, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      toast.error(sessionError.message);
+      return;
+    }
+
+    const userId = sessionRes.session?.user.id;
+    const email = formData.contactEmail || sessionRes.session?.user.email || '';
+    if (!email) {
+      toast.error('Please enter a contact email');
+      return;
+    }
+
+    const { error } = await supabase.from('listings').insert({
+      title: formData.itemName,
+      description: formData.description,
+      category: formData.category,
+      source: 'user',
+      status: 'active',
+      estimated_location_text: formData.location || null,
+      contact_email: email,
+      created_by: userId ?? null,
+    });
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
     toast.success('Lost item posted successfully! You will be notified if it\'s found.', {
       duration: 4000,
     });

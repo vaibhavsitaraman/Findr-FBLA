@@ -1,28 +1,37 @@
 import { AlertCircle, Clock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+function getNextDonationEvent(now: Date) {
+  // Quarterly events: March, June, September, December
+  // Uses the 15th at 12:00 local time as a deterministic “event time”.
+  const months = [2, 5, 8, 11];
+  for (const month of months) {
+    const candidate = new Date(now.getFullYear(), month, 15, 12, 0, 0, 0);
+    if (candidate.getTime() > now.getTime()) return candidate;
+  }
+  return new Date(now.getFullYear() + 1, 2, 15, 12, 0, 0, 0);
+}
+
+function getTimeLeft(target: Date, now: Date) {
+  const ms = Math.max(0, target.getTime() - now.getTime());
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / (60 * 60 * 24));
+  const hours = Math.floor((totalSeconds % (60 * 60 * 24)) / (60 * 60));
+  const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
+  const seconds = totalSeconds % 60;
+  return { days, hours, minutes, seconds };
+}
+
 export function AlertBar() {
-  const [timeLeft, setTimeLeft] = useState({
-    days: 12,
-    hours: 5,
-    minutes: 43,
-    seconds: 22,
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const now = new Date();
+    return getTimeLeft(getNextDonationEvent(now), now);
   });
 
   useEffect(() => {
+    const eventDate = getNextDonationEvent(new Date());
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { ...prev, hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        } else if (prev.days > 0) {
-          return { days: prev.days - 1, hours: 23, minutes: 59, seconds: 59 };
-        }
-        return prev;
-      });
+      setTimeLeft(getTimeLeft(eventDate, new Date()));
     }, 1000);
 
     return () => clearInterval(timer);

@@ -6,56 +6,96 @@ import { ListingsPage } from './components/ListingsPage';
 import { QueryPage } from './components/QueryPage';
 import { StatsPage } from './components/StatsPage';
 import { AccountPage } from './components/AccountPage';
+import { AuthDialog } from './components/AuthDialog';
+import { StaffPage } from './components/StaffPage';
 import { Toaster } from './components/ui/sonner';
 import { toast } from 'sonner';
+import { supabase } from '../lib/supabaseClient';
 
-type Page = 'landing' | 'listings' | 'query' | 'stats' | 'account';
+type Page = 'landing' | 'listings' | 'query' | 'stats' | 'account' | 'staff';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>('landing');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   // isDarkMode is now always true conceptually, we can remove the state or just keep it true
   const isDarkMode = true;
 
   // Show alert bar only on certain pages
-  const showAlertBar = ['listings', 'query', 'stats', 'account'].includes(currentPage);
+  const showAlertBar = ['listings', 'query', 'stats', 'account', 'staff'].includes(currentPage);
 
   // Apply dark mode class to document always
   useEffect(() => {
     document.documentElement.classList.add('dark');
   }, []);
 
-  const handleLogin = () => {
-    // Mock login - in production this would be real authentication
-    setIsLoggedIn(true);
-    setUserName('Alex Johnson');
-    setUserEmail('alex.johnson@school.edu');
-    toast.success('Successfully logged in!', {
-      description: 'Welcome back to Findr',
+  useEffect(() => {
+    let isMounted = true;
+
+    const init = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (!isMounted) return;
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
+
+      const session = data.session;
+      setIsLoggedIn(Boolean(session));
+      setUserEmail(session?.user.email ?? '');
+      setUserName((session?.user.user_metadata?.full_name as string | undefined) ?? '');
+    };
+
+    init();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event: unknown, session: unknown) => {
+      if (!isMounted) return;
+      const typedSession = session as { user: { email?: string | null; user_metadata?: { full_name?: unknown } } } | null;
+      setIsLoggedIn(Boolean(typedSession));
+      setUserEmail(typedSession?.user.email ?? '');
+      setUserName((typedSession?.user.user_metadata?.full_name as string | undefined) ?? '');
+
+      if (typedSession) {
+        toast.success('Successfully signed in!', {
+          description: 'Welcome back to Findr',
+        });
+      }
     });
+
+    return () => {
+      isMounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleLogin = () => {
+    setIsAuthDialogOpen(true);
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUserName('');
-    setUserEmail('');
-    setCurrentPage('landing');
-    toast.info('Logged out successfully');
+    supabase.auth
+      .signOut()
+      .then((res: { error: { message: string } | null }) => {
+        if (res.error) {
+          toast.error(res.error.message);
+          return;
+        }
+        setUserName('');
+        setUserEmail('');
+        setCurrentPage('landing');
+        toast.info('Logged out successfully');
+      })
+      .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : 'Failed to sign out';
+        toast.error(message);
+      });
   };
 
-  const handleNavigate = (page: Page) => {
-    setCurrentPage(page);
+  const handleNavigate = (page: string) => {
+    setCurrentPage(page as Page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleClaim = (itemId: string) => {
-    toast.success('Item claimed successfully!', {
-      description: 'Please visit the main office to pick up your item.',
-      duration: 5000,
-    });
-    console.log('Claimed item:', itemId);
   };
 
   // Auto-scroll to top on page change
@@ -116,6 +156,8 @@ export default function App() {
         isDarkMode={isDarkMode}
       />
 
+      <AuthDialog open={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen} />
+
       {/* Alert Bar */}
       {showAlertBar && <AlertBar />}
 
@@ -131,7 +173,7 @@ export default function App() {
         )}
 
         {currentPage === 'listings' && isLoggedIn && (
-          <ListingsPage onClaim={handleClaim} />
+          <ListingsPage />
         )}
 
         {currentPage === 'query' && isLoggedIn && (
@@ -146,8 +188,12 @@ export default function App() {
           <AccountPage userName={userName} userEmail={userEmail} />
         )}
 
+        {currentPage === 'staff' && isLoggedIn && (
+          <StaffPage />
+        )}
+
         {/* Redirect to login if trying to access protected pages */}
-        {!isLoggedIn && ['listings', 'query', 'account'].includes(currentPage) && (
+        {!isLoggedIn && ['listings', 'query', 'account', 'staff'].includes(currentPage) && (
           <div 
             className="min-h-screen flex items-center justify-center"
           >

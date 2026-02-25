@@ -1,125 +1,108 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { DetectionCard, LostItem } from './DetectionCard';
 import { Input } from './ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Search, Filter } from 'lucide-react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
+import { supabase } from '../../lib/supabaseClient';
+import { toast } from 'sonner';
 
-interface ListingsPageProps {
-  onClaim: (id: string) => void;
-}
+type ListingRow = {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  source: 'ai' | 'user';
+  status: 'active' | 'claimed' | 'resolved' | 'donated';
+  detected_at: string | null;
+  camera_id: string | null;
+  camera_lat: number | null;
+  camera_lng: number | null;
+  ai_confidence: number | null;
+  estimated_location_text: string | null;
+  pickup_location_text: string | null;
+  pickup_at: string | null;
+  created_at: string;
+};
 
-export function ListingsPage({ onClaim }: ListingsPageProps) {
+type ClaimStatus = 'submitted' | 'approved' | 'rejected' | 'cancelled';
+
+type ClaimRow = {
+  id: string;
+  listing_id: string;
+  claimant_id: string;
+  status: ClaimStatus;
+  created_at: string;
+};
+
+export function ListingsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedItem, setSelectedItem] = useState<LostItem | null>(null);
   const [showClaimDialog, setShowClaimDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [items, setItems] = useState<LostItem[]>([]);
+  const [selectedClaimStatus, setSelectedClaimStatus] = useState<ClaimStatus | null>(null);
+  const [selectedPickupLocation, setSelectedPickupLocation] = useState<string | null>(null);
+  const [selectedPickupAt, setSelectedPickupAt] = useState<string | null>(null);
 
-  // Mock data for lost items
-  const mockItems: LostItem[] = [
-    {
-      id: '1',
-      title: 'Black Backpack',
-      description: 'JanSport black backpack with blue zipper. Contains textbooks and laptop.',
-      location: 'Building A, 2nd Floor, Camera A',
-      timestamp: 'Today at 3:12 PM',
-      status: 'detected',
-      aiDetected: true,
-      confidence: 87,
-      imageUrl: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=300&fit=crop',
-      category: 'Backpack',
-    },
-    {
-      id: '2',
-      title: 'Blue Water Bottle',
-      description: 'Hydro Flask water bottle, cobalt blue color with stickers.',
-      location: 'Library, 3rd Floor Study Room',
-      timestamp: 'Today at 1:45 PM',
-      status: 'pending',
-      aiDetected: true,
-      confidence: 92,
-      imageUrl: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=400&h=300&fit=crop',
-      category: 'Water Bottle',
-      postedBy: 'John Smith',
-    },
-    {
-      id: '3',
-      title: 'AirPods Pro Case',
-      description: 'White AirPods Pro charging case, slightly scratched on the back.',
-      location: 'Cafeteria, Table 12',
-      timestamp: 'Yesterday at 5:30 PM',
-      status: 'detected',
-      aiDetected: true,
-      confidence: 78,
-      imageUrl: 'https://images.unsplash.com/photo-1606841837239-c5a1a4a07af7?w=400&h=300&fit=crop',
-      category: 'Electronics',
-    },
-    {
-      id: '4',
-      title: 'Red Hoodie',
-      description: 'Nike red hoodie, size M. Left in gym locker room.',
-      location: 'Gymnasium, Locker Room B',
-      timestamp: 'Yesterday at 2:15 PM',
-      status: 'pending',
-      aiDetected: false,
-      imageUrl: 'https://images.unsplash.com/photo-1556821840-3a63f95609a7?w=400&h=300&fit=crop',
-      category: 'Clothing',
-      postedBy: 'Sarah Johnson',
-    },
-    {
-      id: '5',
-      title: 'Car Keys with Tesla Fob',
-      description: 'Set of car keys with Tesla Model 3 key fob and house keys.',
-      location: 'Building C, Hallway near Room 304',
-      timestamp: '2 days ago at 11:20 AM',
-      status: 'detected',
-      aiDetected: true,
-      confidence: 95,
-      imageUrl: 'https://images.unsplash.com/photo-1582139329536-e7284fece509?w=400&h=300&fit=crop',
-      category: 'Keys',
-    },
-    {
-      id: '6',
-      title: 'MacBook Pro 14"',
-      description: 'Space Gray MacBook Pro with case. Found in study area.',
-      location: 'Library, 1st Floor Computer Lab',
-      timestamp: '3 days ago at 4:45 PM',
-      status: 'claimed',
-      aiDetected: true,
-      confidence: 89,
-      imageUrl: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=300&fit=crop',
-      category: 'Electronics',
-      claimedBy: 'Michael Chen',
-    },
-    {
-      id: '7',
-      title: 'Prescription Glasses',
-      description: 'Black frame prescription glasses in a hard case.',
-      location: 'Student Center, Study Lounge',
-      timestamp: '3 days ago at 10:30 AM',
-      status: 'pending',
-      aiDetected: false,
-      imageUrl: 'https://images.unsplash.com/photo-1574258495973-f010dfbb5371?w=400&h=300&fit=crop',
-      category: 'Accessories',
-      postedBy: 'Emily Davis',
-    },
-    {
-      id: '8',
-      title: 'Textbook: "Introduction to Psychology"',
-      description: 'Psychology textbook, 5th edition, with highlighted pages.',
-      location: 'Building B, Room 205',
-      timestamp: '4 days ago at 2:00 PM',
-      status: 'detected',
-      aiDetected: true,
-      confidence: 84,
-      imageUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&h=300&fit=crop',
-      category: 'Books',
-    },
-  ];
+  useEffect(() => {
+    let isMounted = true;
 
-  const filteredItems = mockItems.filter((item) => {
+    const load = async () => {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('listings')
+        .select('id, title, description, category, source, status, detected_at, camera_id, camera_lat, camera_lng, ai_confidence, estimated_location_text, pickup_location_text, pickup_at, created_at')
+        .order('created_at', { ascending: false });
+
+      if (!isMounted) return;
+
+      if (error) {
+        toast.error(error.message);
+        setItems([]);
+        setIsLoading(false);
+        return;
+      }
+
+      const rows = (data as ListingRow[]) ?? [];
+      const mapped: LostItem[] = rows.map((r) => {
+        const locationText = r.source === 'ai'
+          ? (r.camera_id ? `Camera ${r.camera_id}${r.camera_lat != null && r.camera_lng != null ? ` (${r.camera_lat.toFixed(5)}, ${r.camera_lng.toFixed(5)})` : ''}` : (r.estimated_location_text ?? 'Unknown location'))
+          : (r.estimated_location_text ?? 'Unknown location');
+
+        const ts = r.source === 'ai'
+          ? (r.detected_at ?? r.created_at)
+          : r.created_at;
+
+        const status: LostItem['status'] = r.status === 'claimed' ? 'claimed' : (r.source === 'ai' ? 'detected' : 'pending');
+
+        return {
+          id: r.id,
+          title: r.title,
+          description: r.description,
+          location: locationText,
+          timestamp: new Date(ts).toLocaleString(),
+          status,
+          aiDetected: r.source === 'ai',
+          confidence: r.ai_confidence ?? undefined,
+          category: r.category,
+        };
+      });
+
+      setItems(mapped);
+      setIsLoading(false);
+    };
+
+    load();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const filteredItems = useMemo(() => items.filter((item) => {
     const matchesSearch = 
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -129,22 +112,84 @@ export function ListingsPage({ onClaim }: ListingsPageProps) {
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
 
     return matchesSearch && matchesCategory && matchesStatus;
-  });
+  }), [items, searchQuery, categoryFilter, statusFilter]);
 
-  const handleClaim = (id: string) => {
-    const item = mockItems.find((i) => i.id === id);
+  const handleClaim = async (id: string) => {
+    const item = items.find((i) => i.id === id);
     if (item) {
       setSelectedItem(item);
+      setSelectedClaimStatus(null);
+      setSelectedPickupLocation(null);
+      setSelectedPickupAt(null);
       setShowClaimDialog(true);
+
+      const { data: sessionRes } = await supabase.auth.getSession();
+      const userId = sessionRes.session?.user.id;
+      if (!userId) return;
+
+      const { data: claimData, error: claimError } = await supabase
+        .from('claims')
+        .select('id, listing_id, claimant_id, status, created_at')
+        .eq('listing_id', id)
+        .eq('claimant_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (claimError) {
+        toast.error(claimError.message);
+        return;
+      }
+
+      if (claimData) {
+        const claim = claimData as ClaimRow;
+        setSelectedClaimStatus(claim.status);
+      }
+
+      const { data: listingData, error: listingError } = await supabase
+        .from('listings')
+        .select('pickup_location_text, pickup_at')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (listingError) {
+        return;
+      }
+
+      if (listingData) {
+        const pickup = listingData as { pickup_location_text: string | null; pickup_at: string | null };
+        setSelectedPickupLocation(pickup.pickup_location_text);
+        setSelectedPickupAt(pickup.pickup_at);
+      }
     }
   };
 
-  const handleConfirmClaim = () => {
-    if (selectedItem) {
-      onClaim(selectedItem.id);
-      setShowClaimDialog(false);
-      setSelectedItem(null);
+  const handleConfirmClaim = async () => {
+    if (!selectedItem) return;
+
+    const { data: sessionRes } = await supabase.auth.getSession();
+    const userId = sessionRes.session?.user.id;
+    if (!userId) {
+      toast.error('Please sign in again');
+      return;
     }
+
+    const { error } = await supabase.from('claims').insert({
+      listing_id: selectedItem.id,
+      claimant_id: userId,
+      status: 'submitted',
+    });
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    toast.success('Claim submitted', {
+      description: 'Staff will review and publish pickup details after approval.',
+    });
+
+    setSelectedClaimStatus('submitted');
   };
 
   const handleReport = (id: string) => {
@@ -219,24 +264,32 @@ export function ListingsPage({ onClaim }: ListingsPageProps) {
           {/* Results Count */}
           <div className="mt-4 pt-4 border-t border-white/10">
             <p className="text-gray-400 text-sm">
-              Showing <span className="font-semibold text-blue-400">{filteredItems.length}</span> of {mockItems.length} items
+              Showing <span className="font-semibold text-blue-400">{filteredItems.length}</span> of {items.length} items
             </p>
           </div>
         </div>
 
         {/* Items Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map((item) => (
-            <DetectionCard
-              key={item.id}
-              item={item}
-              onClaim={handleClaim}
-              onReport={handleReport}
-            />
-          ))}
-        </div>
+        {!isLoading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredItems.map((item) => (
+              <DetectionCard
+                key={item.id}
+                item={item}
+                onClaim={handleClaim}
+                onReport={handleReport}
+              />
+            ))}
+          </div>
+        )}
 
-        {filteredItems.length === 0 && (
+        {isLoading && (
+          <div className="text-center py-16 bg-white/5 rounded-2xl border border-white/10">
+            <p className="text-gray-400 text-lg">Loading listings...</p>
+          </div>
+        )}
+
+        {!isLoading && filteredItems.length === 0 && (
           <div className="text-center py-16 bg-white/5 rounded-2xl border border-white/10">
             <p className="text-gray-400 text-lg">
               No items found matching your search criteria.
@@ -267,9 +320,17 @@ export function ListingsPage({ onClaim }: ListingsPageProps) {
               </div>
 
               <div className="p-4 rounded-lg text-sm bg-blue-500/10 text-blue-200 border border-blue-500/20">
-                <p className="font-semibold mb-1 text-blue-400">Pickup Location:</p>
-                <p>Main Office - Building A, Room 101</p>
-                <p className="mt-2 text-blue-300/80">Hours: Monday-Friday, 9:00 AM - 5:00 PM</p>
+                <p className="font-semibold mb-1 text-blue-400">Pickup Details:</p>
+                {selectedClaimStatus === 'approved' && selectedPickupLocation ? (
+                  <>
+                    <p>{selectedPickupLocation}</p>
+                    {selectedPickupAt && (
+                      <p className="mt-2 text-blue-300/80">Pickup date: {new Date(selectedPickupAt).toLocaleString()}</p>
+                    )}
+                  </>
+                ) : (
+                  <p>Hidden until staff approves your claim.</p>
+                )}
               </div>
 
               <div className="p-4 rounded-lg text-sm bg-orange-500/10 text-orange-200 border border-orange-500/20">
@@ -288,7 +349,7 @@ export function ListingsPage({ onClaim }: ListingsPageProps) {
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-0"
                   onClick={handleConfirmClaim}
                 >
-                  Confirm Claim
+                  Submit Claim
                 </Button>
               </div>
             </div>
