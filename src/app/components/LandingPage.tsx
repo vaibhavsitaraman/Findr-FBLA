@@ -3,6 +3,9 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import { TrustedBy } from './TrustedBy';
 import { FeatureTabs } from './FeatureTabs';
+import { useState, useEffect } from 'react';
+import findrAiCore from '../../images/findr_ai_core.png';
+import findrLogoOnly from '../../images/findr_logo_only.png';
 
 interface LandingPageProps {
   onNavigate: (page: string) => void;
@@ -12,6 +15,17 @@ interface LandingPageProps {
 }
 
 export function LandingPage({ onNavigate, onLogin, isLoggedIn, isDarkMode }: LandingPageProps) {
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const features = [
     {
       icon: Camera,
@@ -132,7 +146,58 @@ export function LandingPage({ onNavigate, onLogin, isLoggedIn, isDarkMode }: Lan
         </div>
 
         <div className="container mx-auto max-w-7xl px-4 py-20 relative z-10">
-          <div className="flex flex-col items-center text-center gap-10">
+          {/* Glowing Moon/Globe Effect */}
+          <div 
+            className="absolute pointer-events-none"
+            style={{
+              top: '60%',
+              left: '50%',
+              transform: `translateX(-50%) translateY(-50%) scale(${0.8 + (Math.min(scrollY / 400, 1) * 0.2)})`,
+              width: '150vw',
+              height: '150vw',
+              maxWidth: '1400px',
+              maxHeight: '1400px',
+              opacity: 0.6 + (Math.min(scrollY / 300, 1) * 0.4),
+              transition: 'opacity 0.3s ease-out, transform 0.3s ease-out',
+              zIndex: 1,
+            }}
+          >
+            {/* Outer glow */}
+            <div
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: isDarkMode
+                  ? 'radial-gradient(circle, rgba(30, 58, 138, 0.5) 0%, rgba(15, 23, 42, 0.4) 30%, rgba(30, 58, 138, 0.3) 60%, transparent 100%)'
+                  : 'radial-gradient(circle, rgba(30, 58, 138, 0.4) 0%, rgba(15, 23, 42, 0.35) 30%, rgba(30, 58, 138, 0.25) 60%, transparent 100%)',
+                filter: 'blur(100px)',
+                transform: 'translateZ(0)',
+              }}
+            />
+            {/* Inner core */}
+            <div
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: isDarkMode
+                  ? 'radial-gradient(circle at 30% 30%, rgba(59, 130, 246, 0.4) 0%, rgba(30, 58, 138, 0.35) 40%, rgba(15, 23, 42, 0.3) 70%, transparent 100%)'
+                  : 'radial-gradient(circle at 30% 30%, rgba(59, 130, 246, 0.35) 0%, rgba(30, 58, 138, 0.3) 40%, rgba(15, 23, 42, 0.25) 70%, transparent 100%)',
+                filter: 'blur(80px)',
+                transform: 'translateZ(0)',
+              }}
+            />
+            {/* Bright center */}
+            <div
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: isDarkMode
+                  ? 'radial-gradient(circle at 30% 30%, rgba(96, 165, 250, 0.3) 0%, rgba(59, 130, 246, 0.25) 30%, rgba(30, 58, 138, 0.2) 60%, transparent 100%)'
+                  : 'radial-gradient(circle at 30% 30%, rgba(96, 165, 250, 0.25) 0%, rgba(59, 130, 246, 0.2) 30%, rgba(30, 58, 138, 0.15) 60%, transparent 100%)',
+                filter: 'blur(60px)',
+                transform: 'translateZ(0)',
+              }}
+            />
+          </div>
+
+          <div className="flex flex-col items-center text-center gap-10 relative z-10">
             {/* Cluely-style pill badge */}
             <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
               <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-sm font-medium text-foreground shadow-lg">
@@ -158,13 +223,67 @@ export function LandingPage({ onNavigate, onLogin, isLoggedIn, isDarkMode }: Lan
               </h1>
               
               <p 
-                className="mx-auto max-w-2xl text-lg md:text-xl opacity-90"
+                className="mx-auto max-w-3xl text-base md:text-lg opacity-90"
                 style={{ 
                   color: isDarkMode ? '#cbd5e1' : '#475569',
                   lineHeight: '1.6'
                 }}
               >
-                Findr transforms lost & found management with camera-assisted detection and individualized, account-based item listings for faster returns.
+                Findr transforms lost & found management with{' '}
+                <span 
+                  className="relative px-2.5 py-1 rounded-md"
+                  style={{
+                    background: isDarkMode 
+                      ? 'linear-gradient(135deg, rgba(30, 58, 138, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)'
+                      : 'linear-gradient(135deg, rgba(30, 58, 138, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
+                    color: '#ffffff',
+                    boxShadow: '0 2px 12px rgba(30, 58, 138, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
+                    border: '1px solid rgba(59, 130, 246, 0.4)',
+                    display: 'inline-block',
+                    fontWeight: '600',
+                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+                    backdropFilter: 'blur(4px)',
+                  }}
+                >
+                  camera-assisted detection
+                </span>
+                {' '}and{' '}
+                <span 
+                  className="relative px-2.5 py-1 rounded-md"
+                  style={{
+                    background: isDarkMode 
+                      ? 'linear-gradient(135deg, rgba(30, 58, 138, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)'
+                      : 'linear-gradient(135deg, rgba(30, 58, 138, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
+                    color: '#ffffff',
+                    boxShadow: '0 2px 12px rgba(30, 58, 138, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
+                    border: '1px solid rgba(59, 130, 246, 0.4)',
+                    display: 'inline-block',
+                    fontWeight: '600',
+                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+                    backdropFilter: 'blur(4px)',
+                  }}
+                >
+                  individualized, account-based item listings
+                </span>
+                {' '}for{' '}
+                <span 
+                  className="relative px-2.5 py-1 rounded-md"
+                  style={{
+                    background: isDarkMode 
+                      ? 'linear-gradient(135deg, rgba(30, 58, 138, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)'
+                      : 'linear-gradient(135deg, rgba(30, 58, 138, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)',
+                    color: '#ffffff',
+                    boxShadow: '0 2px 12px rgba(30, 58, 138, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
+                    border: '1px solid rgba(59, 130, 246, 0.4)',
+                    display: 'inline-block',
+                    fontWeight: '600',
+                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+                    backdropFilter: 'blur(4px)',
+                  }}
+                >
+                  faster returns
+                </span>
+                .
               </p>
             </div>
 
@@ -174,32 +293,72 @@ export function LandingPage({ onNavigate, onLogin, isLoggedIn, isDarkMode }: Lan
                 <>
                   <button
                     onClick={() => onNavigate('listings')}
-                    className="group relative px-8 py-4 rounded-full font-semibold text-lg transition-all hover:scale-105 flex items-center gap-2 text-white"
+                    className="group relative px-8 py-4 rounded-full font-semibold text-lg flex items-center gap-2 text-white overflow-hidden"
                     style={{
                       background: 'linear-gradient(135deg, rgba(96,165,250,0.9) 0%, rgba(37,99,235,0.95) 100%)',
                       boxShadow: '0 4px 24px rgba(59,130,246,0.45), inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -1px 0 rgba(0,0,0,0.15)',
                       border: '1px solid rgba(255,255,255,0.25)',
                       backdropFilter: 'blur(8px)',
+                      transform: 'scale(1)',
+                      transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.05)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
                     }}
                   >
+                    {/* Ripple effect overlay */}
+                    <span 
+                      className="ripple-effect absolute inset-0 rounded-full"
+                      style={{
+                        background: 'radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(147,197,253,0.3) 40%, rgba(96,165,250,0.2) 60%, transparent 80%)',
+                        transform: 'scale(0)',
+                        opacity: 0,
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <span className="relative z-10 flex items-center gap-2">
                     Launch App
-                    <ArrowRight className="size-5 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="size-5 group-hover:translate-x-1 transition-transform duration-300 ease-out" />
+                    </span>
                   </button>
                 </>
               ) : (
                 <>
                   <button
                     onClick={onLogin}
-                    className="group relative px-8 py-4 rounded-full font-semibold text-lg transition-all hover:scale-105 flex items-center gap-2 text-white"
+                    className="group relative px-8 py-4 rounded-full font-semibold text-lg flex items-center gap-2 text-white overflow-hidden"
                     style={{
                       background: 'linear-gradient(135deg, rgba(96,165,250,0.9) 0%, rgba(37,99,235,0.95) 100%)',
                       boxShadow: '0 4px 24px rgba(59,130,246,0.45), inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -1px 0 rgba(0,0,0,0.15)',
                       border: '1px solid rgba(255,255,255,0.25)',
                       backdropFilter: 'blur(8px)',
+                      transform: 'scale(1)',
+                      transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.05)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
                     }}
                   >
+                    {/* Ripple effect overlay */}
+                    <span 
+                      className="ripple-effect absolute inset-0 rounded-full"
+                      style={{
+                        background: 'radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(147,197,253,0.3) 40%, rgba(96,165,250,0.2) 60%, transparent 80%)',
+                        transform: 'scale(0)',
+                        opacity: 0,
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    <span className="relative z-10 flex items-center gap-2">
                     Start Finding
-                    <ArrowRight className="size-5 group-hover:translate-x-1 transition-transform" />
+                      <ArrowRight className="size-5 group-hover:translate-x-1 transition-transform duration-300 ease-out" />
+                    </span>
                   </button>
                 </>
               )}
@@ -220,8 +379,8 @@ export function LandingPage({ onNavigate, onLogin, isLoggedIn, isDarkMode }: Lan
               </div>
               <div className="relative rounded-lg overflow-hidden bg-black/40 aspect-[21/9] flex items-center justify-center group">
                 <img 
-                  src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=2000" 
-                  alt="Dashboard Preview"
+                  src={findrAiCore} 
+                  alt="Findr AI Core System"
                   className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
@@ -235,7 +394,7 @@ export function LandingPage({ onNavigate, onLogin, isLoggedIn, isDarkMode }: Lan
                       </div>
                       <div>
                         <div className="font-semibold text-sm">Item Detected</div>
-                        <div className="text-xs text-white/60">MacBook Pro matching user #4829</div>
+                        <div className="text-xs text-white/60">Adidas Backpack matching user #4829</div>
                       </div>
                     </div>
                   </div>
@@ -249,7 +408,7 @@ export function LandingPage({ onNavigate, onLogin, isLoggedIn, isDarkMode }: Lan
       {/* Trusted By Section - Conversion Style */}
       <TrustedBy />
 
-      {/* Four Ways / Features - Cluely Horizontal Scroll Style */}
+      {/* Four Ways / Features - Horizontal Row Style */}
       <section className="py-24 overflow-hidden">
         <div className="container mx-auto max-w-7xl px-4 mb-12">
           <h2 
@@ -261,27 +420,41 @@ export function LandingPage({ onNavigate, onLogin, isLoggedIn, isDarkMode }: Lan
           </h2>
         </div>
 
-        <div className="flex overflow-x-auto pb-12 px-4 snap-x snap-mandatory gap-6 no-scrollbar lg:grid lg:grid-cols-2 lg:gap-8 lg:px-8 lg:overflow-visible container mx-auto max-w-7xl">
-          {features.map((feature, index) => (
-            <div 
-              key={index}
-              className="min-w-[85vw] md:min-w-[400px] lg:min-w-0 snap-start rounded-[2rem] overflow-hidden relative group h-[400px] lg:h-[500px]"
-            >
-              <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-90 transition-opacity group-hover:opacity-100`} />
-              <img 
-                src={feature.image} 
-                alt={feature.title}
-                className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-50 group-hover:scale-110 transition-transform duration-700"
-              />
-              <div className="absolute inset-0 p-8 flex flex-col justify-end text-white">
-                <div className="bg-white/20 w-fit p-3 rounded-2xl backdrop-blur-md mb-4 shadow-lg">
-                  <feature.icon className="size-8 text-white" />
+        <div className="container mx-auto max-w-7xl px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((feature, index) => (
+              <div 
+                key={index}
+                className="relative rounded-2xl overflow-hidden group cursor-pointer"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(15,23,42,0.6) 0%, rgba(30,64,175,0.5) 100%)',
+                  border: '1px solid rgba(148, 163, 184, 0.2)',
+                  transition: 'all 0.4s ease-out',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,64,175,0.9) 35%, rgba(59,130,246,0.85) 100%)';
+                  e.currentTarget.style.borderColor = 'rgba(191, 219, 254, 0.5)';
+                  e.currentTarget.style.boxShadow = '0 20px 50px rgba(15,23,42,0.8), inset 0 1px 0 rgba(255,255,255,0.1)';
+                  e.currentTarget.style.transform = 'translateY(-4px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(15,23,42,0.6) 0%, rgba(30,64,175,0.5) 100%)';
+                  e.currentTarget.style.borderColor = 'rgba(148, 163, 184, 0.2)';
+                  e.currentTarget.style.boxShadow = 'none';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <div className="absolute inset-0 backdrop-blur-sm" />
+                <div className="relative p-6 flex flex-col h-full min-h-[300px]">
+                  <div className="bg-white/10 w-fit p-3 rounded-xl backdrop-blur-md mb-4 shadow-lg group-hover:bg-white/20 transition-colors">
+                    <feature.icon className="size-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold mb-2 text-white">{feature.title}</h3>
+                  <p className="text-sm text-white/80 leading-relaxed">{feature.description}</p>
                 </div>
-                <h3 className="text-3xl font-bold mb-2">{feature.title}</h3>
-                <p className="text-lg text-white/90 leading-relaxed">{feature.description}</p>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
@@ -289,6 +462,7 @@ export function LandingPage({ onNavigate, onLogin, isLoggedIn, isDarkMode }: Lan
       <FeatureTabs />
 
       {/* Meeting Notes / How it Works - Cluely 3 Steps Layout */}
+      {/* How it Works - Left content, Right images */}
       <section className="py-32 bg-background relative">
         <div className="container mx-auto max-w-7xl px-4">
           <div className="text-center mb-20">
@@ -303,27 +477,78 @@ export function LandingPage({ onNavigate, onLogin, isLoggedIn, isDarkMode }: Lan
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-8">
-            {howItWorks.map((step, index) => (
-              <div key={index} className="flex flex-col gap-6 group">
-                <div className="relative rounded-3xl overflow-hidden aspect-square bg-muted">
-                  <img 
-                    src={step.imageUrl} 
-                    alt={step.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-4 left-4 size-12 rounded-full bg-white/90 backdrop-blur text-foreground flex items-center justify-center font-bold text-xl shadow-lg">
-                    {step.number}
+          <div className="flex flex-col lg:flex-row items-start gap-16 lg:gap-24">
+            {/* Left: Stacked Steps */}
+            <div className="flex flex-col lg:w-1/2">
+
+              {/* Step 1 */}
+              <div className="flex gap-6" style={{ minHeight: '280px' }}>
+                <div className="flex flex-col items-center">
+                  <div className="size-12 rounded-full bg-foreground text-background flex items-center justify-center font-bold text-xl shrink-0 shadow-md">
+                    1
                   </div>
+                  <div className="w-px flex-1 mt-3 bg-border" />
                 </div>
-                <div>
-                  <h3 className="text-2xl font-bold mb-3">{step.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">
-                    {step.description}
-                  </p>
+                <div className="pb-16 pt-1">
+                  <h3 className="text-3xl font-bold mb-3">{howItWorks[0].title}</h3>
+                  <p className="text-lg text-muted-foreground leading-relaxed">{howItWorks[0].description}</p>
                 </div>
               </div>
-            ))}
+
+              {/* Step 2 */}
+              <div className="flex gap-6" style={{ minHeight: '280px' }}>
+                <div className="flex flex-col items-center">
+                  <div className="size-12 rounded-full bg-foreground text-background flex items-center justify-center font-bold text-xl shrink-0 shadow-md">
+                    2
+                  </div>
+                  <div className="w-px flex-1 mt-3 bg-border" />
+                </div>
+                <div className="pb-16 pt-1">
+                  <h3 className="text-3xl font-bold mb-3">{howItWorks[1].title}</h3>
+                  <p className="text-lg text-muted-foreground leading-relaxed">{howItWorks[1].description}</p>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex gap-6" style={{ minHeight: '280px' }}>
+                <div className="flex flex-col items-center">
+                  <div className="size-12 rounded-full bg-foreground text-background flex items-center justify-center font-bold text-xl shrink-0 shadow-md">
+                    3
+                  </div>
+                </div>
+                <div className="pt-1">
+                  <h3 className="text-3xl font-bold mb-3">{howItWorks[2].title}</h3>
+                  <p className="text-lg text-muted-foreground leading-relaxed">{howItWorks[2].description}</p>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Right: Stacked Images */}
+            <div className="lg:w-1/2 w-full flex flex-col gap-6">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-border">
+                <img
+                  src="src/images/ai model 2.png"
+                  alt="AI detection visualization"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-border">
+                <img
+                  src="src/images/MatchingPNG.png"
+                  alt="Smart matching visualization"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-border">
+                <img
+                  src="src/images/Claimmake.png"
+                  alt="Claim and verify"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+
           </div>
         </div>
       </section>
@@ -332,6 +557,13 @@ export function LandingPage({ onNavigate, onLogin, isLoggedIn, isDarkMode }: Lan
       <section className="py-24 bg-foreground text-background relative overflow-hidden">
         <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
         <div className="container mx-auto max-w-4xl px-4 text-center relative z-10">
+          <div className="flex justify-center mb-8">
+            <img 
+              src={findrLogoOnly} 
+              alt="Findr"
+              className="h-16 md:h-20 w-auto"
+            />
+          </div>
           <h2 className="text-4xl md:text-6xl font-bold mb-8" style={{ fontFamily: "'EB Garamond', serif" }}>
             Ready to secure your campus?
           </h2>
@@ -339,11 +571,57 @@ export function LandingPage({ onNavigate, onLogin, isLoggedIn, isDarkMode }: Lan
             Join the network of smart campuses using Findr to protect what matters.
           </p>
           <div className="flex justify-center gap-4">
-            <button className="px-8 py-4 bg-background text-foreground rounded-full font-bold text-lg hover:scale-105 transition-transform">
-              Get Started Now
+            <button 
+              className="group relative px-8 py-4 bg-background text-foreground rounded-full font-bold text-lg overflow-hidden"
+              style={{
+                transform: 'scale(1)',
+                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              {/* Ripple effect overlay */}
+              <span 
+                className="ripple-effect absolute inset-0 rounded-full"
+                style={{
+                  background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(200,200,200,0.2) 40%, rgba(150,150,150,0.1) 60%, transparent 80%)',
+                  transform: 'scale(0)',
+                  opacity: 0,
+                  pointerEvents: 'none',
+                }}
+              />
+              <span className="relative z-10">Get Started Now</span>
             </button>
-            <button className="px-8 py-4 border border-background/30 text-background rounded-full font-bold text-lg hover:bg-background/10 transition-colors">
-              Contact Sales
+            <button 
+              className="group relative px-8 py-4 border border-background/30 text-background rounded-full font-bold text-lg overflow-hidden"
+              style={{
+                transform: 'scale(1)',
+                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease-out',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)';
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+            >
+              {/* Ripple effect overlay */}
+              <span 
+                className="ripple-effect absolute inset-0 rounded-full"
+                style={{
+                  background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(200,200,200,0.15) 40%, rgba(150,150,150,0.1) 60%, transparent 80%)',
+                  transform: 'scale(0)',
+                  opacity: 0,
+                  pointerEvents: 'none',
+                }}
+              />
+              <span className="relative z-10">Contact Sales</span>
             </button>
           </div>
         </div>
@@ -364,6 +642,22 @@ export function LandingPage({ onNavigate, onLogin, isLoggedIn, isDarkMode }: Lan
         .animate-fade-in-up {
           opacity: 0;
           animation: fadeInUp 0.8s ease-out forwards;
+        }
+        @keyframes ripple {
+          0% {
+            transform: scale(0);
+            opacity: 0.6;
+          }
+          50% {
+            opacity: 0.4;
+          }
+          100% {
+            transform: scale(2.5);
+            opacity: 0;
+          }
+        }
+        .group:hover .ripple-effect {
+          animation: ripple 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
       `}</style>
     </div>

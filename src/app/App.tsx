@@ -222,11 +222,25 @@ export default function App() {
 
       {/* Footer */}
       <footer 
-        className="border-t mt-16 py-8 bg-card/50 backdrop-blur-md"
-        style={{ borderColor: 'rgba(148, 163, 184, 0.1)' }}
+        className="border-t mt-16 py-8 backdrop-blur-md relative overflow-hidden"
+        style={{ 
+          borderColor: 'rgba(148, 163, 184, 0.1)',
+          background: 'rgba(15, 23, 42, 0.8)',
+        }}
       >
-        <div className="container mx-auto max-w-7xl px-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {/* Purple glow at the bottom */}
+        <div 
+          className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2"
+          style={{
+            width: '70%',
+            height: '180px',
+            background: 'radial-gradient(ellipse at bottom, rgba(147, 51, 234, 0.35) 0%, rgba(109, 40, 217, 0.15) 40%, transparent 70%)',
+            filter: 'blur(30px)',
+          }}
+        />
+
+        <div className="container mx-auto max-w-7xl px-4 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {/* Brand */}
             <div>
               <h3 
@@ -292,10 +306,10 @@ export default function App() {
               </ul>
             </div>
 
-            {/* Tech Stack */}
+            {/* Our Stack */}
             <div>
               <h4 className="font-semibold mb-3" style={{ color: '#f8fafc' }}>
-                Powered By
+                Our Stack
               </h4>
               <ul className="space-y-2" style={{ color: '#94a3b8', fontSize: '0.875rem' }}>
                 <li>🎥 Security Camera Integration</li>
@@ -305,8 +319,35 @@ export default function App() {
                 <li>📱 Swift Mobile App (iOS)</li>
               </ul>
             </div>
-          </div>
 
+            {/* iOS Download */}
+            <div>
+              <h4 className="font-semibold mb-3" style={{ color: '#f8fafc' }}>
+                Get the App
+              </h4>
+              <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                Download our iOS app and get notified the moment your item is found.
+              </p>
+              <a
+                href="https://apps.apple.com/your-app-link"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 px-5 py-3 rounded-xl font-semibold text-sm hover:scale-105 transition-transform duration-200"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  color: '#f8fafc',
+                  backdropFilter: 'blur(8px)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+                }}
+              >
+                <svg viewBox="0 0 24 24" className="size-5 fill-current" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+                Download on the App Store
+              </a>
+            </div>
+          </div>
           {/* Copyright */}
           <div 
             className="mt-8 pt-8 text-center border-t"
