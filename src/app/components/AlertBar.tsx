@@ -1,5 +1,5 @@
-import { AlertCircle, Clock } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { AlertCircle, Clock } from "lucide-react";
+import { useEffect, useState } from "react";
 
 function getNextDonationEvent(now: Date) {
   // Quarterly events: March, June, September, December
@@ -38,9 +38,14 @@ export function AlertBar() {
   }, []);
 
   return (
-    <div 
+    <div
       className="w-full py-3 px-4"
-      style={{ backgroundColor: '#FF8A4B' }}
+      style={{
+        backgroundColor: "#FF8A4B",
+        position: "relative",
+        zIndex: 30,
+        marginTop: "64px", // Height of navbar to position it below
+      }}
     >
       <div className="container mx-auto max-w-7xl flex items-center justify-center gap-3 text-white">
         <AlertCircle className="size-5 flex-shrink-0" />
@@ -63,9 +68,7 @@ export function AlertBar() {
               {timeLeft.seconds}s
             </span>
           </div>
-          <span className="font-medium">
-            — Claim your items now!
-          </span>
+          <span className="font-medium">— Claim your items now!</span>
         </div>
       </div>
     </div>
