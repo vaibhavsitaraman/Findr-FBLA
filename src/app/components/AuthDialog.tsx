@@ -26,6 +26,15 @@ type Mode = "sign_in" | "sign_up";
 type SignUpRole = "student" | "administrator";
 type SignUpStep = "role_selection" | "school_info" | "account_creation";
 
+function generateJoinCode(length: number = 8) {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < length; i += 1) {
+    code += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return code;
+}
+
 export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
   const [mode, setMode] = useState<Mode>("sign_in");
   const [signUpRole, setSignUpRole] = useState<SignUpRole>("student");
@@ -63,8 +72,6 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
           password,
         });
         if (error) throw error;
-
-        toast.success("Successfully signed in");
         onOpenChange(false);
         return;
       }
@@ -77,21 +84,36 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
       if (signUpStep === "school_info") {
         // Validate school info
-        if (!schoolName || !schoolCode) {
-          toast.error("Please provide school name and join code");
+        if (!schoolName) {
+          toast.error("Please provide school name");
           return;
         }
 
-        if (signUpRole === "student" && (!studentId || !grade)) {
-          toast.error("Please provide student ID and grade");
-          return;
+        if (signUpRole === "student") {
+          if (!schoolCode) {
+            toast.error("Please provide your school's join code");
+            return;
+          }
+          if (!studentId || !grade) {
+            toast.error("Please provide student ID and grade");
+            return;
+          }
+
+          // Verify school exists with join code
+          const school = await SchoolService.getSchoolByJoinCode(schoolCode);
+          if (!school || school.name.toLowerCase() !== schoolName.toLowerCase()) {
+            toast.error("Invalid school name or join code");
+            return;
+          }
         }
 
-        // Verify school exists with join code
-        const school = await SchoolService.getSchoolByJoinCode(schoolCode);
-        if (!school || school.name.toLowerCase() !== schoolName.toLowerCase()) {
-          toast.error("Invalid school name or join code");
-          return;
+        if (signUpRole === "administrator") {
+          // First admin creates the school, so the school name must not already exist.
+          const existingSchool = await SchoolService.getSchoolByName(schoolName);
+          if (existingSchool) {
+            toast.error("A school with this name already exists");
+            return;
+          }
         }
 
         setSignUpStep("account_creation");
@@ -99,15 +121,17 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
       }
 
       // Final account creation
+      const isAdmin = signUpRole === "administrator";
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
-            role: signUpRole,
+            role: isAdmin ? "admin" : "student",
             school_name: schoolName,
-            school_code: schoolCode,
+            school_code: isAdmin ? null : schoolCode,
             student_id: signUpRole === "student" ? studentId : null,
             grade: signUpRole === "student" ? grade : null,
           },
@@ -118,27 +142,68 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
 
       // Create user profile in database if signup successful
       if (data.user) {
-        const school = await SchoolService.getSchoolByJoinCode(schoolCode);
-        if (school) {
-          await UserService.createUser({
-            email,
-            full_name: fullName,
-            role: signUpRole === "administrator" ? "admin" : signUpRole,
-            school_id: school.id,
-            student_id: signUpRole === "student" ? studentId : undefined,
-            grade: signUpRole === "student" ? grade : undefined,
-            auth_id: data.user.id,
-          });
+        let school: { id: string } | null = null;
 
-          // Create default notification settings
-          await NotificationService.createNotificationSettings({
-            user_id: data.user.id,
-            email_notifications: true,
-            push_notifications: true,
-            sms_notifications: false,
-            item_found_notifications: true,
-            item_matched_notifications: true,
-            donation_reminders: true,
+        if (isAdmin) {
+          // Admin creates a new school with auto-generated join code
+          let joinCode = generateJoinCode(8);
+          for (let attempt = 0; attempt < 5; attempt += 1) {
+            try {
+              const created = await SchoolService.createSchool({
+                name: schoolName,
+                id: joinCode,
+              });
+              school = created;
+              setSchoolCode(joinCode);
+              break;
+            } catch {
+              joinCode = generateJoinCode(8);
+            }
+          }
+
+          if (!school) {
+            toast.error("Failed to create school join code");
+            return;
+          }
+        } else {
+          school = await SchoolService.getSchoolByJoinCode(schoolCode);
+        }
+
+        if (!school) {
+          toast.error("School not found");
+          return;
+        }
+
+        await UserService.createUser({
+          email,
+          full_name: fullName,
+          role: isAdmin ? "admin" : "student",
+          school_id: school.id,
+          student_id: isAdmin ? undefined : studentId,
+          grade: isAdmin ? undefined : grade,
+          auth_id: data.user.id,
+        });
+
+        const profile = await UserService.getUserByAuthId(data.user.id);
+        if (!profile) {
+          toast.error("User profile not found after signup");
+          return;
+        }
+
+        // Create default notification settings
+        await NotificationService.createNotificationSettings({
+          user_id: profile.id,
+          email_notifications: true,
+          push_notifications: true,
+          sms_notifications: false,
+          item_found_notifications: true,
+          item_matched_notifications: true,
+          donation_reminders: true,
+        });
+
+        if (isAdmin) {
+          toast.success("School created", {
+            description: `Student join code: ${school.id}`,
           });
         }
       }
@@ -371,22 +436,24 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="schoolCode" className="text-white font-medium">
-                  School Join Code
-                </Label>
-                <Input
-                  id="schoolCode"
-                  placeholder="Enter your school's unique join code"
-                  value={schoolCode}
-                  onChange={(e) => setSchoolCode(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-blue-500/50 backdrop-blur-sm transition-all duration-300"
-                  style={{
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1)",
-                  }}
-                  required
-                />
-              </div>
+              {signUpRole === "student" && (
+                <div className="space-y-2">
+                  <Label htmlFor="schoolCode" className="text-white font-medium">
+                    School Join Code
+                  </Label>
+                  <Input
+                    id="schoolCode"
+                    placeholder="Enter your school's unique join code"
+                    value={schoolCode}
+                    onChange={(e) => setSchoolCode(e.target.value)}
+                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-blue-500/50 backdrop-blur-sm transition-all duration-300"
+                    style={{
+                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.1)",
+                    }}
+                    required
+                  />
+                </div>
+              )}
 
               {signUpRole === "student" && (
                 <>

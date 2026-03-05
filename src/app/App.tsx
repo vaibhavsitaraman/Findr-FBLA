@@ -8,11 +8,20 @@ import { StatsPage } from "./components/StatsPage";
 import { AccountPage } from "./components/AccountPage";
 import { AuthDialog } from "./components/AuthDialog";
 import { StaffPage } from "./components/StaffPage";
+import { AdminPage } from "./components/AdminPage";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from "../lib/supabase";
+import { UserService } from "../lib/database";
 
-type Page = "landing" | "listings" | "query" | "stats" | "account" | "staff";
+type Page =
+  | "landing"
+  | "listings"
+  | "query"
+  | "stats"
+  | "account"
+  | "admin"
+  | "staff";
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<Page>("landing");
@@ -55,18 +64,23 @@ export default function App() {
       setUserName(
         (session?.user.user_metadata?.full_name as string | undefined) ?? "",
       );
-      setUserRole(
-        (session?.user.user_metadata?.role as string | undefined) ?? "",
-      );
+
+      if (session?.user.id) {
+        const profile = await UserService.getUserByAuthId(session.user.id);
+        setUserRole(profile?.role ?? "");
+      } else {
+        setUserRole("");
+      }
     };
 
     init();
 
     const { data: sub } = supabase.auth.onAuthStateChange(
-      (_event: unknown, session: unknown) => {
+      (event: unknown, session: unknown) => {
         if (!isMounted) return;
         const typedSession = session as {
           user: {
+            id: string;
             email?: string | null;
             user_metadata?: { full_name?: unknown; role?: unknown };
           };
@@ -77,11 +91,22 @@ export default function App() {
           (typedSession?.user.user_metadata?.full_name as string | undefined) ??
             "",
         );
-        setUserRole(
-          (typedSession?.user.user_metadata?.role as string | undefined) ?? "",
-        );
 
-        if (typedSession) {
+        if (typedSession?.user) {
+          UserService.getUserByAuthId(typedSession.user.id)
+            .then((profile) => {
+              if (!isMounted) return;
+              setUserRole(profile?.role ?? "");
+            })
+            .catch(() => {
+              if (!isMounted) return;
+              setUserRole("");
+            });
+        } else {
+          setUserRole("");
+        }
+
+        if (event === "SIGNED_IN" && typedSession) {
           toast.success("Successfully signed in!", {
             description: "Welcome back to Findr",
           });
@@ -210,11 +235,19 @@ export default function App() {
           <AccountPage userName={userName} userEmail={userEmail} />
         )}
 
-        {currentPage === "staff" && isLoggedIn && <StaffPage />}
+        {currentPage === "admin" && isLoggedIn && userRole === "admin" && (
+          <AdminPage />
+        )}
+
+        {currentPage === "staff" && isLoggedIn && userRole === "admin" && (
+          <StaffPage />
+        )}
 
         {/* Redirect to login if trying to access protected pages */}
         {!isLoggedIn &&
-          ["listings", "query", "account", "staff"].includes(currentPage) && (
+          ["listings", "query", "account", "admin", "staff"].includes(
+            currentPage,
+          ) && (
             <div className="min-h-screen flex items-center justify-center">
               <div className="text-center p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md shadow-xl">
                 <h2

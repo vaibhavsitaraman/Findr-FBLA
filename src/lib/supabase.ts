@@ -10,7 +10,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export interface School {
   id: string;
   name: string;
-  join_code: string;
   created_at: string;
   updated_at: string;
 }
@@ -31,11 +30,13 @@ export interface User {
 export interface LostItem {
   id: string;
   user_id: string;
+  school_id?: string;
   title: string;
   description?: string;
   category?: string;
   location?: string;
   status: 'active' | 'claimed' | 'resolved' | 'donated';
+  date_claimed?: string;
   image_url?: string;
   created_at: string;
   updated_at: string;
@@ -44,10 +45,15 @@ export interface LostItem {
 export interface FoundItem {
   id: string;
   user_id: string;
+  school_id?: string;
   title: string;
   description?: string;
+  category?: string;
   location?: string;
-  status: 'active' | 'claimed' | 'resolved' | 'donated';
+  status: 'active' | 'matched' | 'claimed' | 'resolved' | 'donated';
+  matched_lost_item_id?: string;
+  pickup_location?: string;
+  pickup_date?: string;
   image_url?: string;
   created_at: string;
   updated_at: string;

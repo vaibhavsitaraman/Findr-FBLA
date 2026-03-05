@@ -55,6 +55,7 @@ export function Navbar({
     { name: "Listings", path: "listings", requiresAuth: true },
     { name: "Query", path: "query", requiresAuth: true },
     { name: "Stats", path: "stats", requiresAuth: false },
+    { name: "Admin", path: "admin", requiresAuth: true, requiresAdmin: true },
     { name: "Staff", path: "staff", requiresAuth: true, requiresAdmin: true },
   ];
 
@@ -120,7 +121,7 @@ export function Navbar({
           <div className="hidden md:flex items-center gap-1 flex-1">
             {navItems.map((item) => {
               // Hide staff option if not admin
-              if (item.requiresAdmin && userRole !== "administrator") {
+              if (item.requiresAdmin && userRole !== "admin") {
                 return null;
               }
 

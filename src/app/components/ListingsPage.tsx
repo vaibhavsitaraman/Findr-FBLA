@@ -17,26 +17,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
-import { supabase } from "../../lib/supabaseClient";
+import { supabase } from "../../lib/supabase";
 import { toast } from "sonner";
-
-type ListingRow = {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  source: "ai" | "user";
-  status: "active" | "claimed" | "resolved" | "donated";
-  detected_at: string | null;
-  camera_id: string | null;
-  camera_lat: number | null;
-  camera_lng: number | null;
-  ai_confidence: number | null;
-  estimated_location_text: string | null;
-  pickup_location_text: string | null;
-  pickup_at: string | null;
-  created_at: string;
-};
+import {
+  AuditService,
+  FoundItemService,
+  LostItemService,
+  UserService,
+} from "../../lib/database";
 
 type ClaimStatus = "submitted" | "approved" | "rejected" | "cancelled";
 
@@ -62,257 +50,103 @@ export function ListingsPage() {
     string | null
   >(null);
   const [selectedPickupAt, setSelectedPickupAt] = useState<string | null>(null);
-
-  // Mock data for development
-  const mockItems: LostItem[] = [
-    {
-      id: "1",
-      title: "Black North Face Backpack",
-      description:
-        "Black North Face backpack with laptop compartment. Contains textbooks and notebooks.",
-      location: "Camera 3 (34.05223, -118.24368)",
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toLocaleString(),
-      status: "detected",
-      aiDetected: true,
-      confidence: 94,
-      category: "Backpack",
-      imageUrl:
-        "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=400&q=80",
-    },
-    {
-      id: "2",
-      title: 'MacBook Pro 13"',
-      description:
-        "Space Gray MacBook Pro with stickers on the lid. Last seen in library.",
-      location: "Main Library - Study Area A",
-      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toLocaleString(),
-      status: "pending",
-      aiDetected: false,
-      category: "Electronics",
-      imageUrl:
-        "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=400&q=80",
-    },
-    {
-      id: "3",
-      title: "Car Key Fob",
-      description:
-        "Honda car key fob with red keychain. Small scratch on the back.",
-      location: "Camera 7 (34.05245, -118.24312)",
-      timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toLocaleString(),
-      status: "detected",
-      aiDetected: true,
-      confidence: 87,
-      category: "Keys",
-      imageUrl: "/src/images/car_key_fob.jpg",
-    },
-    {
-      id: "4",
-      title: "Black Water Bottle",
-      description: "Black water bottle with black cap. Has some minor dents.",
-      location: "Student Union - Food Court",
-      timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toLocaleString(),
-      status: "claimed",
-      aiDetected: false,
-      category: "Water Bottle",
-      imageUrl: "/src/images/water bottle image.png",
-    },
-    {
-      id: "5",
-      title: "iPhone 13 Pro",
-      description:
-        "Graphite iPhone 13 Pro in clear case. Screen has small crack in corner.",
-      location: "Camera 12 (34.05289, -118.24298)",
-      timestamp: new Date(Date.now() - 10 * 60 * 60 * 1000).toLocaleString(),
-      status: "detected",
-      aiDetected: true,
-      confidence: 91,
-      category: "Electronics",
-      imageUrl:
-        "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=400&q=80",
-    },
-    {
-      id: "6",
-      title: "Wireless Earbuds",
-      description:
-        "White wireless earbuds in charging case. Brand: AirPods Pro.",
-      location: "Gym - Locker Room",
-      timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toLocaleString(),
-      status: "pending",
-      aiDetected: false,
-      category: "Electronics",
-      imageUrl: "/src/images/airpods pro.jpeg",
-      postedBy: "current-user",
-      claimCount: 3,
-    },
-    {
-      id: "7",
-      title: "Math Textbook",
-      description:
-        "Calculus: Early Transcendentals 8th Edition. Has highlighting and notes.",
-      location: "Math Building - Room 201",
-      timestamp: new Date(Date.now() - 14 * 60 * 60 * 1000).toLocaleString(),
-      status: "pending",
-      aiDetected: false,
-      category: "Books",
-      imageUrl:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
-    },
-    {
-      id: "8",
-      title: "Leather Wallet",
-      description:
-        "Brown leather wallet with multiple card slots. Contains student ID.",
-      location: "Camera 5 (34.05267, -118.24345)",
-      timestamp: new Date(Date.now() - 16 * 60 * 60 * 1000).toLocaleString(),
-      status: "detected",
-      aiDetected: true,
-      confidence: 89,
-      category: "Accessories",
-      imageUrl:
-        "https://images.unsplash.com/photo-1565404713113-2b3c1e8c7a5b?auto=format&fit=crop&w=400&q=80",
-    },
-    {
-      id: "9",
-      title: "Sunglasses",
-      description:
-        "Ray-Ban aviator sunglasses with gold frames. Case included.",
-      location: "Campus Quad - Benches",
-      timestamp: new Date(Date.now() - 18 * 60 * 60 * 1000).toLocaleString(),
-      status: "pending",
-      aiDetected: false,
-      category: "Accessories",
-      imageUrl:
-        "https://images.unsplash.com/photo-1473496914038-9a5e1b8d2d8a?auto=format&fit=crop&w=400&q=80",
-    },
-    {
-      id: "10",
-      title: "Jacket",
-      description: "Black denim jacket with silver zipper. Size Medium.",
-      location: "Science Building - Lobby",
-      timestamp: new Date(Date.now() - 20 * 60 * 60 * 1000).toLocaleString(),
-      status: "claimed",
-      aiDetected: false,
-      category: "Clothing",
-      imageUrl:
-        "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=400&q=80",
-    },
-    {
-      id: "11",
-      title: "USB-C Cable",
-      description: "6ft USB-C charging cable. White color. Brand: Anker.",
-      location: "Camera 9 (34.05234, -118.24321)",
-      timestamp: new Date(Date.now() - 22 * 60 * 60 * 1000).toLocaleString(),
-      status: "detected",
-      aiDetected: true,
-      confidence: 82,
-      category: "Electronics",
-      imageUrl:
-        "https://images.unsplash.com/photo-1586953208448-b95a79798f07?auto=format&fit=crop&w=400&q=80",
-    },
-    {
-      id: "12",
-      title: "Notebook Set",
-      description:
-        "Set of 5 spiral notebooks. Various colors: blue, green, red, yellow, purple.",
-      location: "Art Building - Studio 3",
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toLocaleString(),
-      status: "pending",
-      aiDetected: false,
-      category: "Accessories",
-      imageUrl:
-        "https://images.unsplash.com/photo-1589994965851-a8f479c573a9?auto=format&fit=crop&w=400&q=80",
-    },
-  ];
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminSchoolId, setAdminSchoolId] = useState<string | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [createDraft, setCreateDraft] = useState({
+    title: "",
+    description: "",
+    category: "",
+    location: "",
+    image_url: "",
+  });
+  const [editDraft, setEditDraft] = useState({
+    title: "",
+    description: "",
+    category: "",
+    location: "",
+    status: "active" as "active" | "claimed" | "resolved" | "donated",
+  });
 
   useEffect(() => {
+    let isMounted = true;
+
     const loadItems = async () => {
+      setIsLoading(true);
       try {
-        // Fetch real lost items from Supabase
-        const { data: lostItems, error: lostError } = await supabase
-          .from("lost_items")
-          .select(
-            `
-            *,
-            users!inner(
-              full_name,
-              email
-            )
-          `,
-          )
-          .order("created_at", { ascending: false });
-
-        // Fetch real found items from Supabase
-        const { data: foundItems, error: foundError } = await supabase
-          .from("found_items")
-          .select(
-            `
-            *,
-            users!inner(
-              full_name,
-              email
-            )
-          `,
-          )
-          .order("created_at", { ascending: false });
-
-        if (lostError || foundError) {
-          console.error("Error fetching items:", { lostError, foundError });
-          // Fall back to mock data if there's an error
-          setItems(mockItems);
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          setItems([]);
           setIsLoading(false);
           return;
         }
 
-        // Transform lost items to match the interface
-        const transformedLostItems = lostItems.map((item) => ({
+        const profile = await UserService.getUserByAuthId(user.id);
+        if (!profile) {
+          toast.error("User profile not found");
+          setItems([]);
+          setIsLoading(false);
+          return;
+        }
+
+        setIsAdmin(profile.role === "admin");
+        setAdminSchoolId(profile.school_id);
+
+        const schoolId = profile.school_id;
+        const [lostItems, foundItems] = await Promise.all([
+          LostItemService.getLostItemsBySchool(schoolId),
+          FoundItemService.getFoundItemsBySchool(schoolId),
+        ]);
+
+        const transformedLostItems: LostItem[] = (lostItems ?? []).map((item: any) => ({
           id: item.id,
           title: item.title,
           description: item.description || "",
           location: item.location || "Unknown location",
           timestamp: new Date(item.created_at).toLocaleString(),
-          status: item.status,
-          aiDetected: false, // Real items are user-posted
+          status: (item.status === "claimed" ? "claimed" : "pending") as LostItem["status"],
+          aiDetected: false,
           confidence: undefined,
           category: item.category || "Other",
           imageUrl: item.image_url,
-          postedBy: item.users.full_name,
-          claimCount: 0, // Would need to be calculated from claims table
+          postedBy: item.users?.full_name,
+          claimCount: 0,
         }));
 
-        // Transform found items to match the interface
-        const transformedFoundItems = foundItems.map((item) => ({
+        const transformedFoundItems: LostItem[] = (foundItems ?? []).map((item: any) => ({
           id: item.id,
           title: item.title,
           description: item.description || "",
           location: item.location || "Unknown location",
           timestamp: new Date(item.created_at).toLocaleString(),
-          status: item.status,
+          status: (item.status === "claimed" ? "claimed" : "pending") as LostItem["status"],
           aiDetected: false,
           confidence: undefined,
-          category: "Found Item", // Different category for found items
+          category: item.category || "Found Item",
           imageUrl: item.image_url,
-          postedBy: item.users.full_name,
+          postedBy: item.users?.full_name,
           claimCount: 0,
         }));
 
-        // Combine all real data with mock data
-        const allItems = [
-          ...transformedLostItems,
-          ...transformedFoundItems,
-          ...mockItems,
-        ];
-
+        const allItems: LostItem[] = [...transformedLostItems, ...transformedFoundItems];
+        if (!isMounted) return;
         setItems(allItems);
       } catch (error) {
-        console.error("Error loading items:", error);
-        // Fall back to mock data
-        setItems(mockItems);
+        const message = error instanceof Error ? error.message : "Failed to load items";
+        toast.error(message);
+        setItems([]);
       } finally {
-        setIsLoading(false);
+        if (isMounted) setIsLoading(false);
       }
     };
 
     loadItems();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const filteredItems = useMemo(
@@ -342,15 +176,19 @@ export function ListingsPage() {
       setSelectedPickupAt(null);
       setShowClaimDialog(true);
 
-      const { data: sessionRes } = await supabase.auth.getSession();
-      const userId = sessionRes.session?.user.id;
-      if (!userId) return;
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const profile = await UserService.getUserByAuthId(user.id);
+      if (!profile) return;
 
       const { data: claimData, error: claimError } = await supabase
         .from("claims")
         .select("id, listing_id, claimant_id, status, created_at")
         .eq("listing_id", id)
-        .eq("claimant_id", userId)
+        .eq("claimant_id", profile.id)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -363,42 +201,124 @@ export function ListingsPage() {
       if (claimData) {
         const claim = claimData as ClaimRow;
         setSelectedClaimStatus(claim.status);
+
+        if (claim.status === "approved") {
+          const { data: pickup } = await supabase
+            .from("found_items")
+            .select("pickup_location, pickup_date")
+            .eq("matched_lost_item_id", id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (pickup) {
+            setSelectedPickupLocation(pickup.pickup_location ?? null);
+            setSelectedPickupAt(pickup.pickup_date ?? null);
+          }
+        }
       }
+    }
+  };
 
-      const { data: listingData, error: listingError } = await supabase
-        .from("listings")
-        .select("pickup_location_text, pickup_at")
-        .eq("id", id)
-        .maybeSingle();
+  const createAdminListing = async () => {
+    if (!isAdmin || !adminSchoolId) return;
+    if (!createDraft.title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
 
-      if (listingError) {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const profile = user ? await UserService.getUserByAuthId(user.id) : null;
+      if (!profile || profile.role !== "admin") {
+        toast.error("Admin access required");
         return;
       }
 
-      if (listingData) {
-        const pickup = listingData as {
-          pickup_location_text: string | null;
-          pickup_at: string | null;
-        };
-        setSelectedPickupLocation(pickup.pickup_location_text);
-        setSelectedPickupAt(pickup.pickup_at);
+      const { data: row, error } = await supabase
+        .from("found_items")
+        .insert({
+          user_id: profile.id,
+          title: createDraft.title,
+          description: createDraft.description || null,
+          category: createDraft.category || null,
+          location: createDraft.location || null,
+          image_url: createDraft.image_url || null,
+          status: "active",
+        })
+        .select(
+          `
+          id,
+          title,
+          description,
+          category,
+          location,
+          status,
+          image_url,
+          created_at,
+          users(full_name)
+        `,
+        )
+        .single();
+
+      if (error) {
+        toast.error(error.message);
+        return;
       }
+
+      await AuditService.logAction({
+        user_id: profile.id,
+        action: "moderation.create_listing",
+        details: { id: row?.id },
+      });
+
+      const card: LostItem = {
+        id: row.id,
+        title: row.title,
+        description: row.description || "",
+        location: row.location || "Unknown location",
+        timestamp: new Date(row.created_at).toLocaleString(),
+        status: row.status === "claimed" ? "claimed" : "pending",
+        aiDetected: false,
+        confidence: undefined,
+        category: row.category || "Found Item",
+        imageUrl: row.image_url || undefined,
+        postedBy: (row as any).users?.full_name,
+        claimCount: 0,
+      };
+
+      setItems((prev) => [card, ...prev]);
+      setIsCreateDialogOpen(false);
+      setCreateDraft({ title: "", description: "", category: "", location: "", image_url: "" });
+      toast.success("Listing created");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create listing";
+      toast.error(message);
     }
   };
 
   const handleConfirmClaim = async () => {
     if (!selectedItem) return;
 
-    const { data: sessionRes } = await supabase.auth.getSession();
-    const userId = sessionRes.session?.user.id;
-    if (!userId) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
       toast.error("Please sign in again");
+      return;
+    }
+
+    const profile = await UserService.getUserByAuthId(user.id);
+    if (!profile) {
+      toast.error("User profile not found");
       return;
     }
 
     const { error } = await supabase.from("claims").insert({
       listing_id: selectedItem.id,
-      claimant_id: userId,
+      claimant_id: profile.id,
       status: "submitted",
     });
 
@@ -419,23 +339,200 @@ export function ListingsPage() {
     alert(`Report submitted for item ${id}. Our team will review it shortly.`);
   };
 
+  const handleAdminEdit = (id: string) => {
+    const item = items.find((i) => i.id === id);
+    if (!item) return;
+    setSelectedItem(item);
+    setEditDraft({
+      title: item.title,
+      description: item.description,
+      category: item.category,
+      location: item.location,
+      status: "active",
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleAdminDelete = async (id: string) => {
+    if (!isAdmin || !adminSchoolId) return;
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const profile = user ? await UserService.getUserByAuthId(user.id) : null;
+      if (!profile || profile.role !== "admin") {
+        toast.error("Admin access required");
+        return;
+      }
+
+      // Verify item belongs to admin's school before mutating
+      const { data: lostScoped } = await supabase
+        .from("lost_items")
+        .select("id, users!inner(school_id)")
+        .eq("id", id)
+        .eq("users.school_id", profile.school_id)
+        .maybeSingle();
+
+      const { data: foundScoped } = await supabase
+        .from("found_items")
+        .select("id, users!inner(school_id)")
+        .eq("id", id)
+        .eq("users.school_id", profile.school_id)
+        .maybeSingle();
+
+      if (!lostScoped && !foundScoped) {
+        toast.error("Item not found for your school");
+        return;
+      }
+
+      // Try deleting from lost_items first; if not found, delete from found_items.
+      const { error: lostDeleteError } = await supabase
+        .from("lost_items")
+        .delete()
+        .eq("id", id);
+
+      if (lostDeleteError) {
+        const { error: foundDeleteError } = await supabase
+          .from("found_items")
+          .delete()
+          .eq("id", id);
+        if (foundDeleteError) throw foundDeleteError;
+      }
+
+      await AuditService.logAction({
+        user_id: profile.id,
+        action: "moderation.delete_item",
+        details: { id },
+      });
+
+      setItems((prev) => prev.filter((x) => x.id !== id));
+      toast.success("Item deleted");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to delete item";
+      toast.error(message);
+    }
+  };
+
+  const saveAdminEdit = async () => {
+    if (!selectedItem) return;
+    if (!isAdmin) return;
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const profile = user ? await UserService.getUserByAuthId(user.id) : null;
+      if (!profile || profile.role !== "admin") {
+        toast.error("Admin access required");
+        return;
+      }
+
+      // Verify item belongs to admin's school before mutating
+      const { data: lostScoped } = await supabase
+        .from("lost_items")
+        .select("id, users!inner(school_id)")
+        .eq("id", selectedItem.id)
+        .eq("users.school_id", profile.school_id)
+        .maybeSingle();
+
+      const { data: foundScoped } = await supabase
+        .from("found_items")
+        .select("id, users!inner(school_id)")
+        .eq("id", selectedItem.id)
+        .eq("users.school_id", profile.school_id)
+        .maybeSingle();
+
+      if (!lostScoped && !foundScoped) {
+        toast.error("Item not found for your school");
+        return;
+      }
+
+      // Update in lost_items first; if not found, update in found_items.
+      const { data: lostRow, error: lostUpdateError } = await supabase
+        .from("lost_items")
+        .update({
+          title: editDraft.title,
+          description: editDraft.description,
+          category: editDraft.category,
+          location: editDraft.location,
+          status: editDraft.status,
+        })
+        .eq("id", selectedItem.id)
+        .select("id")
+        .maybeSingle();
+
+      if (lostUpdateError || !lostRow) {
+        const { error: foundUpdateError } = await supabase
+          .from("found_items")
+          .update({
+            title: editDraft.title,
+            description: editDraft.description,
+            category: editDraft.category,
+            location: editDraft.location,
+            status: editDraft.status,
+          })
+          .eq("id", selectedItem.id);
+        if (foundUpdateError) throw foundUpdateError;
+      }
+
+      await AuditService.logAction({
+        user_id: profile.id,
+        action: "moderation.edit_item",
+        details: { id: selectedItem.id },
+      });
+
+      setItems((prev) =>
+        prev.map((x) =>
+          x.id === selectedItem.id
+            ? {
+                ...x,
+                title: editDraft.title,
+                description: editDraft.description,
+                category: editDraft.category,
+                location: editDraft.location,
+              }
+            : x,
+        ),
+      );
+      setIsEditDialogOpen(false);
+      toast.success("Item updated");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to update item";
+      toast.error(message);
+    }
+  };
+
   return (
     <div className="min-h-screen py-8">
       <div className="container mx-auto max-w-7xl px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1
-            className="mb-2 text-white"
-            style={{
-              fontFamily: "'EB Garamond', serif",
-              fontSize: "2.5rem",
-            }}
-          >
-            Lost & Found Listings
-          </h1>
-          <p className="text-gray-300 text-lg">
-            Browse all detected and posted lost items on campus
-          </p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1
+                className="mb-2 text-white"
+                style={{
+                  fontFamily: "'EB Garamond', serif",
+                  fontSize: "2.5rem",
+                }}
+              >
+                Lost & Found Listings
+              </h1>
+              <p className="text-gray-300 text-lg">
+                Browse all detected and posted lost items on campus
+              </p>
+            </div>
+
+            {isAdmin && (
+              <Button
+                className="bg-blue-600 hover:bg-blue-700 text-white border-0"
+                onClick={() => setIsCreateDialogOpen(true)}
+              >
+                Add Listing
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Filters */}
@@ -505,6 +602,8 @@ export function ListingsPage() {
                 item={item}
                 onClaim={handleClaim}
                 onReport={handleReport}
+                onEdit={isAdmin ? handleAdminEdit : undefined}
+                onDelete={isAdmin ? handleAdminDelete : undefined}
               />
             ))}
           </div>
@@ -549,17 +648,24 @@ export function ListingsPage() {
                 </p>
               </div>
 
-              {/* Pickup Location Information */}
               <div className="p-4 rounded-xl text-sm bg-gradient-to-br from-indigo-600/20 to-indigo-800/10 border border-indigo-500/30 backdrop-blur-sm">
                 <p className="font-semibold mb-2 text-indigo-400">
-                  Where to Pick Up:
+                  Pickup Details
                 </p>
-                <p className="text-indigo-200">
-                  Security Office - Main Building, Room 101
-                </p>
-                <p className="text-indigo-200/80 mt-1">
-                  Hours: Monday-Friday 8:00 AM - 6:00 PM
-                </p>
+                {selectedClaimStatus === "approved" && selectedPickupLocation ? (
+                  <>
+                    <p className="text-indigo-200">{selectedPickupLocation}</p>
+                    {selectedPickupAt && (
+                      <p className="text-indigo-200/80 mt-1">
+                        {new Date(selectedPickupAt).toLocaleString()}
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-indigo-200">
+                    Pickup location is shown after admin approval.
+                  </p>
+                )}
               </div>
 
               <div className="p-4 rounded-xl text-sm bg-gradient-to-br from-orange-600/20 to-orange-800/10 border border-orange-500/30 backdrop-blur-sm">
@@ -588,6 +694,126 @@ export function ListingsPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="bg-gradient-to-br from-slate-900 via-blue-900/20 to-slate-900 border-blue-500/30 text-white shadow-2xl backdrop-blur-xl">
+          <DialogHeader>
+            <DialogTitle className="text-blue-400 font-serif text-2xl">
+              Edit Listing
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Admin-only moderation
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <Input
+              value={editDraft.title}
+              onChange={(e) => setEditDraft((p) => ({ ...p, title: e.target.value }))}
+              className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-blue-500/50"
+              placeholder="Title"
+            />
+            <Input
+              value={editDraft.category}
+              onChange={(e) => setEditDraft((p) => ({ ...p, category: e.target.value }))}
+              className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-blue-500/50"
+              placeholder="Category"
+            />
+            <Input
+              value={editDraft.location}
+              onChange={(e) => setEditDraft((p) => ({ ...p, location: e.target.value }))}
+              className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-blue-500/50"
+              placeholder="Location"
+            />
+            <Input
+              value={editDraft.description}
+              onChange={(e) =>
+                setEditDraft((p) => ({ ...p, description: e.target.value }))
+              }
+              className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-blue-500/50"
+              placeholder="Description"
+            />
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1 border-white/20 text-gray-300 hover:text-white hover:bg-white/10 bg-transparent"
+                onClick={() => setIsEditDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-0"
+                onClick={saveAdminEdit}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="bg-gradient-to-br from-slate-900 via-blue-900/20 to-slate-900 border-blue-500/30 text-white shadow-2xl backdrop-blur-xl">
+          <DialogHeader>
+            <DialogTitle className="text-blue-400 font-serif text-2xl">
+              Add Listing
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Admin-only listing creation
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <Input
+              value={createDraft.title}
+              onChange={(e) => setCreateDraft((p) => ({ ...p, title: e.target.value }))}
+              className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-blue-500/50"
+              placeholder="Title"
+            />
+            <Input
+              value={createDraft.category}
+              onChange={(e) => setCreateDraft((p) => ({ ...p, category: e.target.value }))}
+              className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-blue-500/50"
+              placeholder="Category"
+            />
+            <Input
+              value={createDraft.location}
+              onChange={(e) => setCreateDraft((p) => ({ ...p, location: e.target.value }))}
+              className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-blue-500/50"
+              placeholder="Location"
+            />
+            <Input
+              value={createDraft.description}
+              onChange={(e) =>
+                setCreateDraft((p) => ({ ...p, description: e.target.value }))
+              }
+              className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-blue-500/50"
+              placeholder="Description"
+            />
+            <Input
+              value={createDraft.image_url}
+              onChange={(e) => setCreateDraft((p) => ({ ...p, image_url: e.target.value }))}
+              className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-blue-500/50"
+              placeholder="Image URL (optional)"
+            />
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1 border-white/20 text-gray-300 hover:text-white hover:bg-white/10 bg-transparent"
+                onClick={() => setIsCreateDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white border-0"
+                onClick={createAdminListing}
+              >
+                Create
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

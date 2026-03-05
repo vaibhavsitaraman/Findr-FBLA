@@ -24,12 +24,16 @@ interface DetectionCardProps {
   onClaim: (id: string) => void;
   onReport: (id: string) => void;
   showActions?: boolean;
+  onEdit?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 export function DetectionCard({
   item,
   onClaim,
   onReport,
+  onEdit,
+  onDelete,
   showActions = true,
 }: DetectionCardProps) {
   const isAIDetected = item.aiDetected;
@@ -180,6 +184,29 @@ export function DetectionCard({
             >
               Report Issue
             </Button>
+          </div>
+        )}
+
+        {showActions && (onEdit || onDelete) && (
+          <div className="flex gap-2 pt-2">
+            {onEdit && (
+              <Button
+                variant="outline"
+                className="flex-1 border-white/20 text-gray-300 hover:text-white hover:bg-white/10 bg-transparent"
+                onClick={() => onEdit(item.id)}
+              >
+                Edit
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                variant="outline"
+                className="flex-1 border-white/20 text-gray-300 hover:text-white hover:bg-white/10 bg-transparent"
+                onClick={() => onDelete(item.id)}
+              >
+                Delete
+              </Button>
+            )}
           </div>
         )}
 

@@ -57,7 +57,7 @@ export class UserService {
 
 // School Management
 export class SchoolService {
-  static async createSchool(schoolData: { name: string; join_code: string }) {
+  static async createSchool(schoolData: { name: string; id: string }) {
     const { data, error } = await supabase
       .from('schools')
       .insert(schoolData)
@@ -68,11 +68,22 @@ export class SchoolService {
     return data;
   }
 
+  static async getSchoolByName(name: string) {
+    const { data, error } = await supabase
+      .from('schools')
+      .select('*')
+      .eq('name', name)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error;
+    return data;
+  }
+
   static async getSchoolByJoinCode(joinCode: string) {
     const { data, error } = await supabase
       .from('schools')
       .select('*')
-      .eq('join_code', joinCode)
+      .eq('id', joinCode)
       .single();
 
     if (error && error.code !== 'PGRST116') throw error;
@@ -324,14 +335,15 @@ export class AuditService {
   static async logAction(action: {
     user_id?: string;
     action: string;
-    table_name?: string;
-    record_id?: string;
-    old_values?: any;
-    new_values?: any;
+    details?: unknown;
   }) {
     const { data, error } = await supabase
-      .from('audit_log')
-      .insert(action)
+      .from('audit_logs')
+      .insert({
+        user_id: action.user_id,
+        action: action.action,
+        details: action.details ?? null,
+      })
       .select()
       .single();
 
