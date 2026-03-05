@@ -41,34 +41,40 @@ export function AlertBar() {
     <div
       className="w-full py-3 px-4"
       style={{
-        backgroundColor: "#FF8A4B",
+        background:
+          "linear-gradient(135deg, rgba(37,99,235,0.9) 0%, rgba(29,78,216,0.95) 100%)",
         position: "relative",
         zIndex: 30,
         marginTop: "64px", // Height of navbar to position it below
+        boxShadow:
+          "0 2px 12px rgba(37,99,235,0.3), inset 0 1px 0 rgba(255,255,255,0.15)",
+        border: "1px solid rgba(59,130,246,0.3)",
+        backdropFilter: "blur(8px)",
       }}
     >
       <div className="container mx-auto max-w-7xl flex items-center justify-center gap-3 text-white">
-        <AlertCircle className="size-5 flex-shrink-0" />
         <div className="flex items-center gap-2 flex-wrap justify-center">
-          <Clock className="size-4" />
-          <span className="font-semibold">
+          <Clock className="size-4 text-blue-100" />
+          <span className="font-semibold text-blue-50">
             Unclaimed items will be donated in:
           </span>
           <div className="flex items-center gap-2 font-bold">
-            <span className="bg-white/20 px-2 py-1 rounded backdrop-blur-sm">
+            <span className="bg-white/10 px-2 py-1 rounded backdrop-blur-sm border border-white/10">
               {timeLeft.days}d
             </span>
-            <span className="bg-white/20 px-2 py-1 rounded backdrop-blur-sm">
+            <span className="bg-white/10 px-2 py-1 rounded backdrop-blur-sm border border-white/10">
               {timeLeft.hours}h
             </span>
-            <span className="bg-white/20 px-2 py-1 rounded backdrop-blur-sm">
+            <span className="bg-white/10 px-2 py-1 rounded backdrop-blur-sm border border-white/10">
               {timeLeft.minutes}m
             </span>
-            <span className="bg-white/20 px-2 py-1 rounded backdrop-blur-sm">
+            <span className="bg-white/10 px-2 py-1 rounded backdrop-blur-sm border border-white/10">
               {timeLeft.seconds}s
             </span>
           </div>
-          <span className="font-medium">— Claim your items now!</span>
+          <span className="font-medium text-blue-50">
+            — Claim your items now!
+          </span>
         </div>
       </div>
     </div>

@@ -23,7 +23,13 @@ import {
   Upload,
 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "../../lib/supabaseClient";
+import { supabase } from "../../lib/supabase";
+import {
+  LostItemService,
+  FoundItemService,
+  UserService,
+  ImageService,
+} from "../../lib/database";
 
 export function QueryPage() {
   const [activeTab, setActiveTab] = useState<"lost" | "found">("lost");
@@ -34,6 +40,7 @@ export function QueryPage() {
     location: "",
     dateRange: "",
     contactEmail: "",
+    image: null as File | null,
   });
   const [foundFormData, setFoundFormData] = useState({
     itemName: "",
@@ -57,53 +64,61 @@ export function QueryPage() {
       return;
     }
 
-    const { data: sessionRes, error: sessionError } =
-      await supabase.auth.getSession();
-    if (sessionError) {
-      toast.error(sessionError.message);
-      return;
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please sign in to report a lost item");
+        return;
+      }
+
+      // Get user profile
+      const profile = await UserService.getUserByAuthId(user.id);
+      if (!profile) {
+        toast.error("User profile not found");
+        return;
+      }
+
+      // Upload image if provided
+      let imageUrl = null;
+      if (lostFormData.image) {
+        imageUrl = await ImageService.uploadImage(lostFormData.image);
+      }
+
+      // Create lost item in database
+      await LostItemService.createLostItem({
+        user_id: profile.id,
+        title: lostFormData.itemName,
+        description: lostFormData.description,
+        category: lostFormData.category,
+        location: lostFormData.location || undefined,
+        image_url: imageUrl || undefined,
+        status: "active",
+      });
+
+      toast.success(
+        "Lost item posted successfully! You will be notified if it's found.",
+        {
+          description: "Your item has been added to the database.",
+        },
+      );
+
+      // Reset form
+      setLostFormData({
+        itemName: "",
+        description: "",
+        category: "",
+        location: "",
+        dateRange: "",
+        contactEmail: "",
+        image: null as File | null,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to post lost item";
+      toast.error(message);
     }
-
-    const userId = sessionRes.session?.user.id;
-    const email =
-      lostFormData.contactEmail || sessionRes.session?.user.email || "";
-    if (!email) {
-      toast.error("Please enter a contact email");
-      return;
-    }
-
-    const { error } = await supabase.from("listings").insert({
-      title: lostFormData.itemName,
-      description: lostFormData.description,
-      category: lostFormData.category,
-      source: "user",
-      status: "active",
-      estimated_location_text: lostFormData.location || null,
-      contact_email: email,
-      created_by: userId ?? null,
-    });
-
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-
-    toast.success(
-      "Lost item posted successfully! You will be notified if it's found.",
-      {
-        duration: 4000,
-      },
-    );
-
-    // Reset form
-    setLostFormData({
-      itemName: "",
-      description: "",
-      category: "",
-      location: "",
-      dateRange: "",
-      contactEmail: "",
-    });
   };
 
   const handleFoundSubmit = async (e: React.FormEvent) => {
@@ -119,22 +134,61 @@ export function QueryPage() {
       return;
     }
 
-    toast.success(
-      "Found item reported successfully! Thank you for helping others.",
-      {
-        duration: 4000,
-      },
-    );
+    try {
+      // Get authenticated user
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please sign in to report a found item");
+        return;
+      }
 
-    // Reset form
-    setFoundFormData({
-      itemName: "",
-      description: "",
-      storageLocation: "",
-      foundLocation: "",
-      foundTime: "",
-      image: null,
-    });
+      // Get user profile from database
+      const profile = await UserService.getUserByAuthId(user.id);
+      if (!profile) {
+        toast.error("User profile not found");
+        return;
+      }
+
+      // Upload image if provided
+      let imageUrl = null;
+      if (foundFormData.image) {
+        imageUrl = await ImageService.uploadImage(foundFormData.image);
+      }
+
+      // Create found item in database
+      await FoundItemService.createFoundItem({
+        user_id: profile.id,
+        title: foundFormData.itemName,
+        description: foundFormData.description,
+        location: foundFormData.foundLocation || undefined,
+        image_url: imageUrl || undefined,
+        status: "active",
+      });
+
+      toast.success(
+        "Found item reported successfully! Thank you for helping others.",
+        {
+          description: "Your item has been added to the database.",
+          duration: 4000,
+        },
+      );
+
+      // Reset form
+      setFoundFormData({
+        itemName: "",
+        description: "",
+        storageLocation: "",
+        foundLocation: "",
+        foundTime: "",
+        image: null,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to submit found item";
+      toast.error(message);
+    }
   };
 
   const handleLostChange = (field: string, value: string) => {

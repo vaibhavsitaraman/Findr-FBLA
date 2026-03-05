@@ -16,7 +16,14 @@ import {
   IdCard,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { supabase } from "../../lib/supabaseClient";
+import { supabase } from "../../lib/supabase";
+import {
+  UserService,
+  NotificationService,
+  LostItemService,
+  FoundItemService,
+  SchoolService,
+} from "../../lib/database";
 
 interface AccountPageProps {
   userName: string;
@@ -39,76 +46,139 @@ export function AccountPage({ userName, userEmail }: AccountPageProps) {
     aiDetection: true,
     donationReminders: false,
   });
+  const [userStats, setUserStats] = useState({
+    itemsPosted: 0,
+    itemsClaimed: 0,
+    itemsReturned: 0,
+    memberSince: "",
+  });
+  const [userActivity, setUserActivity] = useState<any[]>([]);
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
+    const fetchUserData = async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          // Get user profile from database
+          const profile = await UserService.getUserByAuthId(user.id);
+          if (profile) {
+            setUserProfile({
+              full_name: profile.full_name,
+              email: profile.email,
+              school_name: profile.school_id
+                ? (await SchoolService.getSchoolById(profile.school_id))?.name
+                : undefined,
+              student_id: profile.student_id,
+              grade: profile.grade,
+              role: profile.role,
+            });
+
+            // Get notification settings
+            const notifSettings =
+              await NotificationService.getNotificationSettings(profile.id);
+            if (notifSettings) {
+              setNotifications({
+                email: notifSettings.email_notifications,
+                aiDetection: notifSettings.item_found_notifications,
+                donationReminders: notifSettings.donation_reminders,
+              });
+            }
+
+            // Get user's lost and found items for stats
+            const lostItems = await LostItemService.getLostItemsByUser(
+              profile.id,
+            );
+            const foundItems = await FoundItemService.getFoundItemsByUser(
+              profile.id,
+            );
+
+            const itemsPosted = lostItems.length;
+            const itemsClaimed = lostItems.filter(
+              (item) => item.status === "claimed",
+            ).length;
+            const itemsReturned = foundItems.filter(
+              (item) => item.status === "claimed",
+            ).length;
+
+            setUserStats({
+              itemsPosted,
+              itemsClaimed,
+              itemsReturned,
+              memberSince: new Date(profile.created_at).toLocaleDateString(
+                "en-US",
+                { month: "long", year: "numeric" },
+              ),
+            });
+
+            // Create activity feed from both lost and found items
+            const activity = [
+              ...lostItems.map((item) => ({
+                id: item.id,
+                type: item.status === "claimed" ? "claimed" : "posted",
+                item: item.item_name,
+                date: new Date(item.updated_at).toLocaleString(),
+                status:
+                  item.status === "claimed" ? "Ready for pickup" : "Active",
+              })),
+              ...foundItems.map((item) => ({
+                id: item.id,
+                type: item.status === "claimed" ? "returned" : "found",
+                item: item.item_name,
+                date: new Date(item.updated_at).toLocaleString(),
+                status:
+                  item.status === "claimed"
+                    ? "Completed"
+                    : "Found - Awaiting claim",
+              })),
+            ]
+              .sort(
+                (a, b) =>
+                  new Date(b.date).getTime() - new Date(a.date).getTime(),
+              )
+              .slice(0, 5);
+
+            setUserActivity(activity);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchUserData();
+  }, [userName, userEmail]);
+
+  const toggleNotification = async (type: keyof typeof notifications) => {
+    try {
       const {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
-        setUserProfile({
-          full_name: user.user_metadata?.full_name || userName,
-          email: user.email || userEmail,
-          school_name: user.user_metadata?.school_name,
-          student_id: user.user_metadata?.student_id,
-          grade: user.user_metadata?.grade,
-          role: user.user_metadata?.role,
-        });
+        const profile = await UserService.getUserByAuthId(user.id);
+        if (profile) {
+          // Map notification types to database fields
+          const fieldMap = {
+            email: "email_notifications",
+            aiDetection: "item_found_notifications",
+            donationReminders: "donation_reminders",
+          };
+
+          await NotificationService.toggleNotification(
+            profile.id,
+            fieldMap[type] as any,
+          );
+
+          setNotifications((prev) => ({
+            ...prev,
+            [type]: !prev[type],
+          }));
+        }
       }
-    };
-    fetchUserProfile();
-  }, [userName, userEmail]);
-  // Mock user data
-  const userStats = {
-    itemsPosted: 3,
-    itemsClaimed: 5,
-    itemsReturned: 2,
-    memberSince: "September 2025",
-  };
-
-  const userActivity = [
-    {
-      id: "1",
-      type: "claimed",
-      item: "Black Backpack",
-      date: "Today at 3:45 PM",
-      status: "Ready for pickup",
-    },
-    {
-      id: "2",
-      type: "posted",
-      item: "Blue Water Bottle",
-      date: "Yesterday at 2:30 PM",
-      status: "Active",
-    },
-    {
-      id: "3",
-      type: "returned",
-      item: "AirPods Pro Case",
-      date: "2 days ago",
-      status: "Completed",
-    },
-    {
-      id: "4",
-      type: "claimed",
-      item: "Red Hoodie",
-      date: "3 days ago",
-      status: "Picked up",
-    },
-    {
-      id: "5",
-      type: "posted",
-      item: "Textbook",
-      date: "5 days ago",
-      status: "Found - Claimed by owner",
-    },
-  ];
-
-  const toggleNotification = (type: keyof typeof notifications) => {
-    setNotifications((prev) => ({
-      ...prev,
-      [type]: !prev[type],
-    }));
+    } catch (error) {
+      console.error("Error toggling notification:", error);
+    }
   };
 
   const getActivityIcon = (type: string) => {

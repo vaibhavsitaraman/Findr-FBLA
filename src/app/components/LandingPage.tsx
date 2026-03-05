@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
-import { TrustedBy } from "./TrustedBy";
 import { FeatureTabs } from "./FeatureTabs";
 import { useState, useEffect } from "react";
 import findrAiCore from "../../images/findr_ai_core.png";
@@ -445,26 +444,54 @@ export function LandingPage({
                   findr_ai_core_system.tsx
                 </div>
               </div>
-              <div className="relative rounded-lg overflow-hidden bg-black/40 aspect-[21/9] flex items-center justify-center group">
-                <img
-                  src={findrAiCore}
-                  alt="Findr AI Core System"
-                  className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700"
-                  style={{
-                    objectFit: "cover",
-                    width: "100%",
-                    height: "100%",
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className="relative rounded-lg overflow-hidden aspect-[21/9] flex items-center justify-center group">
+                {/* Four Gradient Cards on Window Background */}
+                <div className="flex items-center justify-center gap-8 w-full h-full p-8">
+                  {/* Card 1 - Items Tracked */}
+                  <div className="flex-1 max-w-[180px] aspect-[3/4] bg-gradient-to-br from-blue-800/95 to-blue-950/70 rounded-xl border border-blue-700/80 backdrop-blur-sm flex flex-col items-center justify-center text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-blue-600/90 hover:to-blue-800/50 hover:border-blue-500/60 cursor-pointer">
+                    <div className="text-5xl font-bold mb-2 bg-gradient-to-b from-white to-blue-200 bg-clip-text text-transparent transition-all duration-300">
+                      78
+                    </div>
+                    <div className="text-sm text-blue-200/90 text-center font-medium transition-all duration-300">
+                      Items Tracked
+                    </div>
+                  </div>
+
+                  {/* Card 2 - AI Accuracy */}
+                  <div className="flex-1 max-w-[180px] aspect-[3/4] bg-gradient-to-br from-blue-800/95 to-blue-950/70 rounded-xl border border-blue-700/80 backdrop-blur-sm flex flex-col items-center justify-center text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-blue-600/90 hover:to-blue-800/50 hover:border-blue-500/60 cursor-pointer">
+                    <div className="text-5xl font-bold mb-2 bg-gradient-to-b from-white to-blue-200 bg-clip-text text-transparent transition-all duration-300">
+                      94%
+                    </div>
+                    <div className="text-sm text-blue-200/90 text-center font-medium transition-all duration-300">
+                      AI Accuracy
+                    </div>
+                  </div>
+
+                  {/* Card 3 - LLM Match Detection Rate */}
+                  <div className="flex-1 max-w-[180px] aspect-[3/4] bg-gradient-to-br from-blue-800/95 to-blue-950/70 rounded-xl border border-blue-700/80 backdrop-blur-sm flex flex-col items-center justify-center text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-blue-600/90 hover:to-blue-800/50 hover:border-blue-500/60 cursor-pointer">
+                    <div className="text-5xl font-bold mb-2 bg-gradient-to-b from-white to-blue-200 bg-clip-text text-transparent transition-all duration-300">
+                      87%
+                    </div>
+                    <div className="text-sm text-blue-200/90 text-center font-medium transition-all duration-300">
+                      LLM Match Detection
+                    </div>
+                  </div>
+
+                  {/* Card 4 - Supported Items */}
+                  <div className="flex-1 max-w-[180px] aspect-[3/4] bg-gradient-to-br from-blue-800/95 to-blue-950/70 rounded-xl border border-blue-700/80 backdrop-blur-sm flex flex-col items-center justify-center text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-blue-600/90 hover:to-blue-800/50 hover:border-blue-500/60 cursor-pointer">
+                    <div className="text-5xl font-bold mb-2 bg-gradient-to-b from-white to-blue-200 bg-clip-text text-transparent transition-all duration-300">
+                      20+
+                    </div>
+                    <div className="text-sm text-blue-200/90 text-center font-medium transition-all duration-300">
+                      Supported Items
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
-
-      {/* Trusted By Section - Conversion Style */}
-      <TrustedBy />
 
       {/* Four Ways / Features - Horizontal Row Style */}
       <section className="py-24 overflow-hidden">

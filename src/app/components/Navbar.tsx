@@ -91,21 +91,33 @@ export function Navbar({
             : "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)",
         }}
       >
-        <div className="container mx-auto max-w-7xl flex h-14 sm:h-16 items-center justify-between px-4 sm:px-5">
+        <div className="container mx-auto max-w-7xl flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo */}
           <button
             onClick={() => onNavigate("landing")}
-            className="flex items-center gap-2 hover:opacity-90 transition-opacity ml-4"
+            className="flex items-center gap-2 hover:opacity-90 transition-opacity flex-shrink-0"
           >
             <img
               src={findrLogo}
               alt="Findr"
-              className="h-8 md:h-9 w-auto drop-shadow-[0_0_18px_rgba(59,130,246,0.7)]"
+              className="h-6 md:h-8 w-auto drop-shadow-[0_0_18px_rgba(59,130,246,0.7)]"
             />
           </button>
 
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden flex items-center gap-2 p-2 rounded-lg hover:bg-white/10 transition-colors"
+            onClick={() => setIsScrolled(!isScrolled)}
+          >
+            <div className="flex flex-col gap-1">
+              <div className="w-6 h-0.5 bg-white rounded"></div>
+              <div className="w-6 h-0.5 bg-white rounded"></div>
+              <div className="w-6 h-0.5 bg-white rounded"></div>
+            </div>
+          </button>
+
           {/* Navigation Items */}
-          <div className="flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-1 flex-1">
             {navItems.map((item) => {
               // Hide staff option if not admin
               if (item.requiresAdmin && userRole !== "administrator") {
@@ -122,24 +134,27 @@ export function Navbar({
                       onNavigate(item.path);
                     }
                   }}
-                  className="px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+                  className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 text-white/90 hover:text-white"
                   style={
                     currentPage === item.path
                       ? activeButtonStyle
                       : { color: "#cbd5e1", background: "transparent" }
                   }
                 >
-                  {item.name}
+                  <span className="hidden sm:inline">{item.name}</span>
+                  <span className="sm:hidden text-xs">{item.name}</span>
                 </button>
               );
             })}
+          </div>
 
-            {/* Account/Login */}
+          {/* Account/Login */}
+          <div className="hidden md:flex items-center gap-2 ml-4 pl-4 border-l border-white/10 flex-shrink-0">
             {isLoggedIn ? (
-              <div className="flex items-center gap-2 ml-4 pl-4 border-l border-white/10">
+              <>
                 <button
                   onClick={() => onNavigate("account")}
-                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 text-white/90 hover:text-white"
                   style={
                     currentPage === "account"
                       ? activeButtonStyle
@@ -147,27 +162,32 @@ export function Navbar({
                   }
                 >
                   <User className="size-4" />
-                  <span>{userName || "Account"}</span>
+                  <span className="hidden sm:inline">
+                    {userName || "Account"}
+                  </span>
+                  <span className="sm:hidden text-xs">Account</span>
                 </button>
                 <button
                   onClick={onLogout}
-                  className="px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+                  className="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 text-white/90 hover:text-white"
                   style={{
                     color: "#cbd5e1",
                     background: "transparent",
                     border: "1px solid rgba(255,255,255,0.15)",
                   }}
                 >
-                  Logout
+                  <span className="hidden sm:inline">Logout</span>
+                  <span className="sm:hidden text-xs">Out</span>
                 </button>
-              </div>
+              </>
             ) : (
               <button
                 onClick={onLogin}
-                className="ml-4 px-6 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
+                className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
                 style={activeButtonStyle}
               >
-                Sign In
+                <span className="hidden sm:inline">Sign In</span>
+                <span className="sm:hidden text-xs">Sign In</span>
               </button>
             )}
           </div>

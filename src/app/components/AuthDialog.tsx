@@ -9,7 +9,12 @@ import {
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { Label } from "./ui/label";
-import { supabase } from "../../lib/supabaseClient";
+import { supabase } from "../../lib/supabase";
+import {
+  UserService,
+  SchoolService,
+  NotificationService,
+} from "../../lib/database";
 import { toast } from "sonner";
 
 interface AuthDialogProps {
@@ -82,6 +87,13 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
           return;
         }
 
+        // Verify school exists with join code
+        const school = await SchoolService.getSchoolByJoinCode(schoolCode);
+        if (!school || school.name.toLowerCase() !== schoolName.toLowerCase()) {
+          toast.error("Invalid school name or join code");
+          return;
+        }
+
         setSignUpStep("account_creation");
         return;
       }
@@ -103,6 +115,33 @@ export function AuthDialog({ open, onOpenChange }: AuthDialogProps) {
       });
 
       if (error) throw error;
+
+      // Create user profile in database if signup successful
+      if (data.user) {
+        const school = await SchoolService.getSchoolByJoinCode(schoolCode);
+        if (school) {
+          await UserService.createUser({
+            email,
+            full_name: fullName,
+            role: signUpRole === "administrator" ? "admin" : signUpRole,
+            school_id: school.id,
+            student_id: signUpRole === "student" ? studentId : undefined,
+            grade: signUpRole === "student" ? grade : undefined,
+            auth_id: data.user.id,
+          });
+
+          // Create default notification settings
+          await NotificationService.createNotificationSettings({
+            user_id: data.user.id,
+            email_notifications: true,
+            push_notifications: true,
+            sms_notifications: false,
+            item_found_notifications: true,
+            item_matched_notifications: true,
+            donation_reminders: true,
+          });
+        }
+      }
 
       if (data.session) {
         toast.success("Account created and signed in");
