@@ -55,6 +55,7 @@ export function Navbar({
     { name: "Listings", path: "listings", requiresAuth: true },
     { name: "Query", path: "query", requiresAuth: true },
     { name: "Stats", path: "stats", requiresAuth: false },
+    { name: "Cameras", path: "cameras", requiresAuth: true, requiresAdmin: true },
     { name: "Admin", path: "admin", requiresAuth: true, requiresAdmin: true },
     { name: "Staff", path: "staff", requiresAuth: true, requiresAdmin: true },
   ];

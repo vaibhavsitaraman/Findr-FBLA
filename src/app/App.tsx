@@ -8,6 +8,7 @@ import { StatsPage } from "./components/StatsPage";
 import { AccountPage } from "./components/AccountPage";
 import { AuthDialog } from "./components/AuthDialog";
 import { StaffPage } from "./components/StaffPage";
+import { CamerasPage } from "./components/CamerasPage";
 import { AdminPage } from "./components/AdminPage";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
@@ -20,6 +21,7 @@ type Page =
   | "query"
   | "stats"
   | "account"
+  | "cameras"
   | "admin"
   | "staff";
 
@@ -231,6 +233,10 @@ export default function App() {
 
         {currentPage === "stats" && <StatsPage />}
 
+        {currentPage === "cameras" && isLoggedIn && userRole === "admin" && (
+          <CamerasPage />
+        )}
+
         {currentPage === "account" && isLoggedIn && (
           <AccountPage userName={userName} userEmail={userEmail} />
         )}
@@ -245,7 +251,7 @@ export default function App() {
 
         {/* Redirect to login if trying to access protected pages */}
         {!isLoggedIn &&
-          ["listings", "query", "account", "admin", "staff"].includes(
+          ["listings", "query", "account", "cameras", "admin", "staff"].includes(
             currentPage,
           ) && (
             <div className="min-h-screen flex items-center justify-center">
