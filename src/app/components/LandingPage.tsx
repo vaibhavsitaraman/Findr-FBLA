@@ -17,6 +17,7 @@ import findrLogoOnly from "../../images/findr_logo_only.png";
 import aiModel2Image from "../../images/ai model 2.png";
 import matchingPngImage from "../../images/MatchingPNG.png";
 import claimMakeImage from "../../images/Claimmake.png";
+import blehImage from "../../images/bleh.png";
 
 interface LandingPageProps {
   onNavigate: (page: string) => void;
@@ -452,12 +453,16 @@ export function LandingPage({
                   <div className="size-3 rounded-full bg-green-500/80" />
                 </div>
                 <div className="flex-1 text-center text-xs font-mono text-muted-foreground opacity-70">
-                  findr_ai_core_system.tsx
+                  findr_ai_core_system.png
                 </div>
               </div>
               <div className="relative rounded-lg overflow-hidden aspect-[21/9] flex items-center justify-center group">
-                {/* Four Gradient Cards on Window Background */}
-                <div className="flex items-center justify-center gap-8 w-full h-full p-8">
+                <img
+                  src={blehImage}
+                  alt="Findr AI Core System"
+                  className="w-full h-full object-cover"
+                />
+                <div className="hidden flex items-center justify-center gap-8 w-full h-full p-8">
                   {/* Card 1 - Items Tracked */}
                   <div className="flex-1 max-w-[180px] aspect-[3/4] bg-gradient-to-br from-blue-800/95 to-blue-950/70 rounded-xl border border-blue-700/80 backdrop-blur-sm flex flex-col items-center justify-center text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-blue-600/90 hover:to-blue-800/50 hover:border-blue-500/60 cursor-pointer">
                     <div className="text-5xl font-bold mb-2 bg-gradient-to-b from-white to-blue-200 bg-clip-text text-transparent transition-all duration-300">
@@ -468,7 +473,6 @@ export function LandingPage({
                     </div>
                   </div>
 
-                  {/* Card 2 - AI Accuracy */}
                   <div className="flex-1 max-w-[180px] aspect-[3/4] bg-gradient-to-br from-blue-800/95 to-blue-950/70 rounded-xl border border-blue-700/80 backdrop-blur-sm flex flex-col items-center justify-center text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-blue-600/90 hover:to-blue-800/50 hover:border-blue-500/60 cursor-pointer">
                     <div className="text-5xl font-bold mb-2 bg-gradient-to-b from-white to-blue-200 bg-clip-text text-transparent transition-all duration-300">
                       94%
@@ -478,7 +482,6 @@ export function LandingPage({
                     </div>
                   </div>
 
-                  {/* Card 3 - LLM Match Detection Rate */}
                   <div className="flex-1 max-w-[180px] aspect-[3/4] bg-gradient-to-br from-blue-800/95 to-blue-950/70 rounded-xl border border-blue-700/80 backdrop-blur-sm flex flex-col items-center justify-center text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-blue-600/90 hover:to-blue-800/50 hover:border-blue-500/60 cursor-pointer">
                     <div className="text-5xl font-bold mb-2 bg-gradient-to-b from-white to-blue-200 bg-clip-text text-transparent transition-all duration-300">
                       87%
@@ -488,7 +491,6 @@ export function LandingPage({
                     </div>
                   </div>
 
-                  {/* Card 4 - Supported Items */}
                   <div className="flex-1 max-w-[180px] aspect-[3/4] bg-gradient-to-br from-blue-800/95 to-blue-950/70 rounded-xl border border-blue-700/80 backdrop-blur-sm flex flex-col items-center justify-center text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-blue-600/90 hover:to-blue-800/50 hover:border-blue-500/60 cursor-pointer">
                     <div className="text-5xl font-bold mb-2 bg-gradient-to-b from-white to-blue-200 bg-clip-text text-transparent transition-all duration-300">
                       20+
