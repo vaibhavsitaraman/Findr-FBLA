@@ -14,6 +14,9 @@ import { FeatureTabs } from "./FeatureTabs";
 import { useState, useEffect } from "react";
 import findrAiCore from "../../images/findr_ai_core.png";
 import findrLogoOnly from "../../images/findr_logo_only.png";
+import aiModel2Image from "../../images/ai model 2.png";
+import matchingPngImage from "../../images/MatchingPNG.png";
+import claimMakeImage from "../../images/Claimmake.png";
 
 interface LandingPageProps {
   onNavigate: (page: string) => void;
@@ -641,21 +644,21 @@ export function LandingPage({
             <div className="lg:w-1/2 w-full flex flex-col gap-6">
               <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-border">
                 <img
-                  src="src/images/ai model 2.png"
+                  src={aiModel2Image}
                   alt="AI detection visualization"
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-border">
                 <img
-                  src="src/images/MatchingPNG.png"
+                  src={matchingPngImage}
                   alt="Smart matching visualization"
                   className="w-full h-full object-cover"
                 />
               </div>
               <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-border">
                 <img
-                  src="src/images/Claimmake.png"
+                  src={claimMakeImage}
                   alt="Claim and verify"
                   className="w-full h-full object-cover"
                 />
