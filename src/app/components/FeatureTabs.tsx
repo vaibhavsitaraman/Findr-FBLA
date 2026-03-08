@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { User, Briefcase } from "lucide-react";
 import studentsView from "../../images/Students_view.png";
+import forStaffView from "../../images/forstaff.png";
 
 export function FeatureTabs() {
   const [activeTab, setActiveTab] = useState(0);
@@ -20,8 +21,7 @@ export function FeatureTabs() {
       icon: Briefcase,
       description:
         "Efficiently log found items with AI detection. Manage inventory and process claims with ease.",
-      image:
-        "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=1000",
+      image: forStaffView,
     },
   ];
 
@@ -85,6 +85,7 @@ export function FeatureTabs() {
                   } opacity-80`}
                   style={{
                     objectFit: tab.id === 0 ? "contain" : "cover",
+                    objectPosition: tab.id === 1 ? "left" : "center",
                   }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />

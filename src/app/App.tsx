@@ -338,7 +338,7 @@ export default function App() {
               <h4 className="font-semibold mb-3" style={{ color: "#f8fafc" }}>
                 Quick Links
               </h4>
-              <ul className="space-y-2">
+              <ul className="space-y-2">                
                 <li>
                   <button
                     onClick={() => handleNavigate("landing")}
@@ -366,6 +366,17 @@ export default function App() {
                     Report Lost Item
                   </button>
                 </li>
+                {isLoggedIn && userRole === "admin" && (
+                  <li>
+                    <button
+                      onClick={() => handleNavigate("cameras")}
+                      className="hover:underline hover:text-blue-400 transition-colors"
+                      style={{ color: "#94a3b8", fontSize: "0.875rem" }}
+                    >
+                      Cameras
+                    </button>
+                  </li>
+                )}
                 <li>
                   <button
                     onClick={() => handleNavigate("stats")}

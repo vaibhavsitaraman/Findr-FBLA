@@ -30,6 +30,14 @@ export function LandingPage({
 }: LandingPageProps) {
   const [scrollY, setScrollY] = useState(0);
 
+  const handleCameraNavigate = () => {
+    if (!isLoggedIn) {
+      onLogin();
+      return;
+    }
+    onNavigate("cameras");
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
@@ -685,6 +693,7 @@ export function LandingPage({
                 transform: "scale(1)",
                 transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
+              onClick={handleCameraNavigate}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "scale(1.05)";
               }}
@@ -703,7 +712,7 @@ export function LandingPage({
                   pointerEvents: "none",
                 }}
               />
-              <span className="relative z-10">Get Started Now</span>
+              <span className="relative z-10">Open Cameras</span>
             </button>
             <button
               className="group relative px-8 py-4 border border-background/30 text-background rounded-full font-bold text-lg overflow-hidden"
