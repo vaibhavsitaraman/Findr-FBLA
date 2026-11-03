@@ -1,11 +1,9 @@
 
   # Findr: FBLA 2026 SLC
 
-  This is a code bundle for Findr: FBLA 2026 SLC. The original project is available at https://www.figma.com/design/lwrkHxaOrzYxi6zm9APZHq/Findr--FBLA-2026-SLC.
+https://findr-fbla.vercel.app/
 
-  ## Running the code
+https://canva.link/my5qc3tq3fxnra8
 
-  Run `npm i` to install the dependencies.
-
-  Run `npm run dev` to start the development server.
+Findr transforms lost & found management with camera-assisted detection and individualized, account-based item listings for faster returns.
   
